@@ -48,6 +48,9 @@ if os.path.split(os.path.abspath(getsourcefile(lambda: 0)))[0] not in sys.path:
 from add_wheels import add_wheels
 add_wheels()
 
+import boto3
+import botocore
+import s3transfer
 from utilities.landxmlSDK.landxml import landxml
 from utilities.landxmlSDK.dcmgeometry.geometry import Geometries
 from utilities.landxmlSDK.dna.dnawriters import DNAWriters
@@ -282,26 +285,35 @@ class LandXML2QGIS:
         self.lines = self.dlg.lineCheckBox.isChecked()
         
     def get_file_names(self):
-        aws_name = self.dlg.AWS_LineEdit()
+        fname = None
+        aws_name = self.dlg.AWS_LineEdit.text()
         if len(aws_name) > 0:
             lga_name = self.dlg.LGAComboBox.currentText()
             lga_names = []
             if len(lga_name) > 0:
                 lga_names.append(lga_name)
-            if len(lga_names) == 0 and self.dlg.checkAllLGAsCheckBox.isChecked() is True:
-                import pickle
-                lgas = pickle.load(Path(self.cwd, 'resources', 'lga_list.pkl'))
-                lga_names.extend([lga for lga in lgas if lgas not in lga_names])
+            # if len(lga_names) == 0 and self.dlg.checkAllLGAsCheckBox.isChecked() is True:
+            #     import pickle
+            #     lgas = pickle.load(str(Path(self.cwd, 'resources', 'lga_list.pkl')))
+            #     lga_names.extend([lga for lga in lgas if lgas not in lga_names])
             for lga in lga_names:
-                lga = lga.replace(' ', '%20')
-                url = f'https://dcm-file-sharing.s3.amazonaws.com/{lga}/{aws_name}.xml'
-                headers = {'Host': 'dcm-file-sharing.s3.ap-southeast-2.amazonaws.com'}
-                r = requests.get(url, headers=headers)
+                s3 = boto3.resource('s3')
+                my_bucket = s3.Bucket('dcm-file-sharing')
+                try:
+                    outpath = Path(self.dlg.lineEdit_3.text(), aws_name)
+                    outxml = Path(outpath, f'{aws_name}.xml')
+                    outpath.mkdir(parents=True, exist_ok=True)
+                    outname = f'{outpath}/{aws_name}.xml'
+                    if outxml.exists() is False or self.dlg.overwriteCheckBox.isChecked() is True:
+                        my_bucket.download_file(f'{lga}/{aws_name}.xml', outxml)
+                    fname = outname
+                except:
+                    QMessageBox.information(None, "Idiot",
+                                            'Couldnt find plan in the repository')
 
 
-
-
-        fname = self.dlg.lineEdit.text()
+        if fname is None:
+            fname = self.dlg.lineEdit.text()
         fnames = []
         if len(fname) > 0:
             fnames.append(fname)
