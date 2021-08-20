@@ -6,14 +6,14 @@
 name=LandXML2QGIS
 qgisMinimumVersion=3.0
 description=Import Vic, NSW LandXML into QGIS temp layers
-version=0.1
+version=0.2
 author=James Leversha, Department of Environment, Land, Water and Planning
 email=james.k.leversha@delwp.vic.gov.au
 
 about=This plugin converts Victorian land xml files to temp layers in QGIS. It has the possibility of setting zone for the files as well as recalcing the coordinates of the points (requires network x package to be installed)
 
-tracker=https://github.com/dcm-victoria/sugarbag/issues
-repository=https://github.com/dcm-victoria/sugarbag.git
+tracker=https://github.com/jameslevershadelwp/landxml2qgis-public/issues
+repository=https://github.com/jameslevershadelwp/landxml2qgis-public.git
 # End of mandatory metadata
 
 # Recommended items:
@@ -25,7 +25,7 @@ hasProcessingProvider=no
 # Tags are comma separated with spaces allowed
 tags=python, landxml, australia, victoria
 
-homepage=http://homepage
+homepage=https://github.com/jameslevershadelwp/landxml2qgis-public
 category=Vector
 icon=icon.png
 # experimental flag
