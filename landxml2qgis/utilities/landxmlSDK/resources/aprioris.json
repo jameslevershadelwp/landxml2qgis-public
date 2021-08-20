@@ -1,0 +1,158 @@
+{
+  "default": {
+    "default_values":
+     [{"min_year": 1700, "max_year": 9999,
+       "measure_types": [{
+         "types": ["Measured", "Computed", "Derived", "About", "Assumed", "Estimated", "ProvidedbyDELWP",
+                   "Adopt Dimension", "Ignored", "default"],
+         "values": {
+           "bearing": [{"min_dist": 0, "max_dist": 9999999, "value": 3600}],
+           "distance": [{"min_dist": 0, "max_dist": 9999999, "value": 10}],
+           "ppm": [{"min_dist": 0, "max_dist": 9999999, "value": 1000}]
+         }
+       }]
+     }],
+    "use_file_values": "True"
+  },
+  "dcmvr": {
+    "default_values":
+     [{"min_year": 1700, "max_year": 9999,
+       "measure_types": [{
+            "types": ["About"],
+            "values": {
+              "bearing": [
+                { "min_dist": 0, "max_dist": 9999999, "value": 3600}
+              ],
+              "distance": [
+                {"min_dist": 0, "max_dist": 9999999, "value": 1}
+              ],
+              "ppm": [
+                {"min_dist": 0, "max_dist": 9999999, "value": 1000}
+              ]
+            }
+          },
+          {
+            "types": ["Estimated", "default"],
+            "values": {
+              "bearing": [
+                {"min_dist": 0, "max_dist": 9999999, "value": 36000}
+              ],
+              "distance": [
+                {"min_dist": 0, "max_dist": 9999999, "value": 10}
+              ],
+              "ppm": [
+                {"min_dist": 0, "max_dist": 9999999, "value": 1000}
+              ]
+            }
+          }
+        ]}
+      ],
+    "values":
+     [{"min_year": 1995, "max_year": 9999,
+       "measure_types": [{
+         "types": ["Measured", "Assumed", "Computed", "Derived", "ProvidedbyDELWP", "Adopt Dimension", "Ignored"],
+         "values": {
+           "bearing": [
+             {"min_dist": 0, "max_dist": 5, "value": 1800},
+             {"min_dist": 5, "max_dist": 20, "value": 300},
+             {"min_dist": 20, "max_dist": 100, "value": 30},
+             {"min_dist": 100, "max_dist": 999999, "value": 20}
+           ],
+           "distance": [
+             {"min_dist": 0, "max_dist": 1, "value": 0.01},
+             {"min_dist": 1, "max_dist": 9999999, "value": 0.02}
+           ],
+           "ppm": [
+             {"min_dist": 0, "max_dist": 9999999, "value": 100}
+           ]
+         }
+       }
+       ]
+     },
+     {"min_year": 1970, "max_year": 1995,
+       "measure_types": [{
+         "types": ["Measured", "Assumed", "Computed", "Derived", "ProvidedbyDELWP", "Adopt Dimension", "Ignored"],
+         "values": {
+           "bearing": [
+             {"min_dist": 0, "max_dist": 5, "value": 1800},
+             {"min_dist": 5, "max_dist": 20, "value": 300},
+             {"min_dist": 20, "max_dist": 100, "value": 30},
+             {"min_dist": 100, "max_dist": 999999, "value": 20}
+           ],
+           "distance": [
+             {"min_dist": 0, "max_dist": 1, "value": 0.01},
+             {"min_dist": 1, "max_dist": 9999999, "value": 0.05}
+           ],
+           "ppm": [
+             {"min_dist": 0, "max_dist": 9999999, "value": 150}
+           ]
+         }
+       }
+       ]
+     },
+     {"min_year": 1950, "max_year": 1970,
+       "measure_types": [{
+         "types": ["Measured", "Assumed", "Computed", "Derived", "ProvidedbyDELWP", "Adopt Dimension", "Ignored"],
+         "values": {
+           "bearing": [
+             {"min_dist": 0, "max_dist": 5, "value": 1800},
+             {"min_dist": 5, "max_dist": 20, "value": 300},
+             {"min_dist": 20, "max_dist": 100, "value": 60},
+             {"min_dist": 100, "max_dist": 999999, "value": 40}
+           ],
+           "distance": [
+             {"min_dist": 0, "max_dist": 1, "value": 0.01},
+             {"min_dist": 1, "max_dist": 9999999, "value": 0.1}
+           ],
+           "ppm": [
+             {"min_dist": 0, "max_dist": 9999999, "value": 200}
+           ]
+         }
+       }
+       ]
+     },
+     {"min_year": 1920, "max_year": 1950,
+       "measure_types": [{
+         "types": ["Measured", "Assumed", "Computed", "Derived", "ProvidedbyDELWP", "Adopt Dimension", "Ignored"],
+         "values": {
+           "bearing": [
+             {"min_dist": 0, "max_dist": 5, "value": 1800},
+             {"min_dist": 5, "max_dist": 20, "value": 300},
+             {"min_dist": 20, "max_dist": 100, "value": 60},
+             {"min_dist": 100, "max_dist": 999999, "value": 40}
+           ],
+           "distance": [
+             {"min_dist": 0, "max_dist": 1, "value": 0.01},
+             {"min_dist": 1, "max_dist": 9999999, "value": 0.1}
+           ],
+           "ppm": [
+             {"min_dist": 0, "max_dist": 9999999, "value": 250}
+           ]
+         }
+       }
+       ]
+     },
+     {"min_year": 1700, "max_year": 1920,
+       "measure_types": [{
+         "types": ["Measured", "Assumed", "Computed", "Derived", "ProvidedbyDELWP", "Adopt Dimension", "Ignored"],
+         "values": {
+           "bearing": [
+             {"min_dist": 0, "max_dist": 5, "value": 1800},
+             {"min_dist": 5, "max_dist": 20, "value": 300},
+             {"min_dist": 20, "max_dist": 100, "value": 60},
+             {"min_dist": 100, "max_dist": 999999, "value": 40}
+           ],
+           "distance": [
+             {"min_dist": 0, "max_dist": 1, "value": 0.01},
+             {"min_dist": 1, "max_dist": 9999999, "value": 0.2}
+           ],
+           "ppm": [
+             {"min_dist": 0, "max_dist": 9999999, "value": 300}
+           ]
+         }
+       }
+       ]
+     }],
+    "use_file_values": "True"
+  }
+}

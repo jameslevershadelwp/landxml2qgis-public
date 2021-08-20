@@ -1,0 +1,1143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Victoria ePlan CIF Protocol, based on LandXML v1.2 and complies with the ICSM ePlan Protocol v1.1 -->
+<!-- Date Posted: 2013/10/07 -->
+<!--  stateType has been re-instated in place of pointStateType -->
+<!-- 30/06/2015 SPEAR 4.2.
+	1. Changed the type of @name for both PlanFeatures and PlanFeature back to String
+	2. Changed the type of @desc for the Line and Curve elements back to xs:string
+	-->
+<!-- 19/11/2015 SPEAR 4.3.
+	1. Replaced <xs:all> with <xs:choice> under <xs:element name="LandXML"> following the national schema
+	2. Changed the cardinality of CgPoints element to 0-*
+	3. Added name and desc optional attributes to CgPoints
+-->
+<!-- 09/06/2016 SPEAR 4.4.
+	1. Changed PlanFeature/@desc to be optional
+-->
+<!-- 27/09/2018 SPEAR 4.8.
+	1. Changed Survey/SurveyHeader/@surveyFormat to be optional
+-->
+<!-- Surveyor firm is optional
+	 Surveyor reference is optional
+--><!-- Added types to be date or empty rather than date
+ added restriction to <xs:simpleType name="zoneNumberType"> to only include 54-56
+ removed all enums except existing for statetype
+ removed <xs:attribute name="zoneNumber" type="zoneNumberType" use="optional"/>
+ added unique constraint to
+ <xs:unique name="uReducedHorizontalPositionName">
+      		<xs:selector xpath=".//*/vic:ObservationGroup/vic:RedHorizontalPosition"/>
+      		<xs:field xpath="@setupID"/>
+  </xs:unique>
+  added regex pattern to direction on azimuth and chord azimuth
+  <xs:pattern value="([0-2]?[0-9]?[0-9]|[3][0-5][0-9]).([0-5][0-9])([0-5][0-9])"/>
+
+  created distance restriction to be greater than 0
+  <xs:simpleType name="distanceRestriction">
+
+  added area restriction to be blank or double not zero
+  <xs:simpleType name="blankOrDouble">
+		<xs:union>
+		  <xs:simpleType>
+			<xs:restriction base='xs:string'>
+			  <xs:length value="0"/>
+			</xs:restriction>
+		  </xs:simpleType>
+		  <xs:simpleType>
+			<xs:restriction base="xs:double">
+				<xs:minExclusive value="0"/>
+			</xs:restriction>
+		  </xs:simpleType>
+		</xs:union>
+    </xs:simpleType>
+
+added unique constraint on text for cgPoints
+<xs:key name="uPointNames">
+			<xs:selector xpath=".//vic:CgPoints/vic:CgPoint"/>
+			<xs:field xpath="."/>
+</xs:key>
+
+15/11/19
+added <xs:attribute name="arcAngleAccuracy" type="xs:double" use="optional"/> and
+<xs:attribute name="angleAccuracy" type="xs:double" use="optional"/> for future use for a priori estimates
+-->
+
+<xs:schema xmlns="http://www.landxml.org/schema/LandXML-1.2" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:enum="urn:xml-gov-au:vic:icsm:eplan:cif:enumerated-types-ext:1.12" xmlns:vic="http://www.landxml.org/schema/LandXML-1.2" targetNamespace="http://www.landxml.org/schema/LandXML-1.2" elementFormDefault="qualified" version="1.10">
+	<xs:import namespace="urn:xml-gov-au:vic:icsm:eplan:cif:enumerated-types-ext:1.12" schemaLocation="xml-gov-au-vic-icsm-eplan-cif-enumerated-types-ext-1.12-r1.xsd"/>
+	<xs:element name="LandXML">
+		<xs:complexType>
+			<xs:choice maxOccurs="unbounded">
+				<xs:element ref="Units"/>
+				<xs:element ref="CoordinateSystem"/>
+				<xs:element ref="Application"/>
+				<xs:element ref="CgPoints" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="Monuments" minOccurs="0"/>
+				<xs:element ref="Parcels" minOccurs="0"/>
+				<xs:element ref="PlanFeatures" minOccurs="0"/>
+				<xs:element ref="Survey"/>
+				<xs:element ref="FeatureDictionary"/>
+			</xs:choice>
+			<xs:attribute name="date" type="xs:date" use="required"/>
+			<xs:attribute name="time" type="xs:time" use="required"/>
+			<xs:attribute name="version" type="xs:string" use="required"/>
+		</xs:complexType>
+		<!-- Define keys to cross-check references -->
+		<xs:unique name="uParcelCoordGeomName">
+			<xs:selector xpath=".//*/vic:CoordGeom"/>
+			<xs:field xpath="@name"/>
+		</xs:unique>
+		<xs:unique name="uReducedHorizontalPositionName">
+            <xs:selector xpath=".//*/vic:ObservationGroup/vic:RedHorizontalPosition"/>
+            <xs:field xpath="@setupID"/>
+        </xs:unique>
+		<xs:key name="ReducedObservationName">
+			<xs:selector xpath=".//*/vic:ObservationGroup/vic:ReducedObservation"/>
+			<xs:field xpath="@name"/>
+		</xs:key>
+
+		<xs:key name="ReducedArcObservationName">
+			<xs:selector xpath=".//*/vic:ObservationGroup/vic:ReducedArcObservation"/>
+			<xs:field xpath="@name"/>
+		</xs:key>
+		<xs:key name="RedHorizontalPositionName">
+			<xs:selector xpath=".//*/vic:ObservationGroup/vic:RedHorizontalPosition"/>
+			<xs:field xpath="@name"/>
+		</xs:key>
+
+		<xs:key name="RedVerticalObservationName">
+			<xs:selector xpath=".//*/vic:ObservationGroup/vic:RedVerticalObservation"/>
+			<xs:field xpath="@name"/>
+		</xs:key>
+		<xs:key name="AnnotationName">
+			<xs:selector xpath=".//vic:Survey/*/vic:Annotation"/>
+			<xs:field xpath="@name"/>
+		</xs:key>
+		<xs:key name="ParcelNames">
+			<xs:selector xpath=".//vic:Parcels/vic:Parcel"/>
+			<xs:field xpath="@name"/>
+		</xs:key>
+		<xs:key name="PointNames">
+			<xs:selector xpath=".//vic:CgPoints/vic:CgPoint"/>
+			<xs:field xpath="@name"/>
+		</xs:key>
+		<xs:key name="uPointNames">
+			<xs:selector xpath=".//vic:CgPoints/vic:CgPoint"/>
+			<xs:field xpath="."/>
+		</xs:key>
+		<xs:key name="InstrumentSetupIds">
+			<xs:selector xpath=".//vic:Survey/vic:InstrumentSetup"/>
+			<xs:field xpath="@id"/>
+		</xs:key>
+		<xs:key name="PlanFeatureName">
+			<xs:selector xpath=".//vic:PlanFeatures/vic:PlanFeature"/>
+			<xs:field xpath="@name"/>
+		</xs:key>
+		<!-- Key Reference Definitions-->
+		<xs:keyref name="AdminAreaPclRefs" refer="ParcelNames">
+			<xs:selector xpath=".//vic:Survey/vic:SurveyHeader/vic:AdministrativeArea"/>
+			<xs:field xpath="@pclRef"/>
+		</xs:keyref>
+		<xs:keyref name="RoadPclRefs" refer="ParcelNames">
+			<xs:selector xpath=".//vic:Parcels/vic:Parcel/vic:LocationAddress/vic:RoadName"/>
+			<xs:field xpath="@pclRef"/>
+		</xs:keyref>
+		<xs:keyref name="InstrumentPointPntRefs" refer="PointNames">
+			<xs:selector xpath=".//vic:Survey/vic:InstrumentSetup/vic:InstrumentPoint"/>
+			<xs:field xpath="@pntRef"/>
+		</xs:keyref>
+		<xs:keyref name="ReducedObservationSetupRefs1" refer="InstrumentSetupIds">
+			<xs:selector xpath=".//vic:Survey/vic:ObservationGroup/vic:ReducedObservation"/>
+			<xs:field xpath="@setupID"/>
+		</xs:keyref>
+		<xs:keyref name="ReducedObservationSetupRefs2" refer="InstrumentSetupIds">
+			<xs:selector xpath=".//vic:Survey/vic:ObservationGroup/vic:ReducedObservation"/>
+			<xs:field xpath="@targetSetupID"/>
+		</xs:keyref>
+		<xs:keyref name="ReducedArcObservationSetupRefs1" refer="InstrumentSetupIds">
+			<xs:selector xpath=".//vic:Survey/vic:ObservationGroup/vic:ReducedArcObservation"/>
+			<xs:field xpath="@setupID"/>
+		</xs:keyref>
+		<xs:keyref name="ReducedArcObservationSetupRefs2" refer="InstrumentSetupIds">
+			<xs:selector xpath=".//vic:Survey/vic:ObservationGroup/vic:ReducedArcObservation"/>
+			<xs:field xpath="@targetSetupID"/>
+		</xs:keyref>
+
+		<xs:unique name="uReducedObservationSetupRefs">
+			<xs:selector xpath=".//vic:Survey/vic:ObservationGroup/vic:ReducedObservation|.//vic:Survey/vic:ObservationGroup/vic:ReducedArcObservation"/>
+			<xs:field xpath="@targetSetupID"/>
+			<xs:field xpath="@setupID"/>
+		</xs:unique>
+		<xs:keyref name="RedHorizontalPositionSetupRefs" refer="InstrumentSetupIds">
+			<xs:selector xpath=".//vic:Survey/vic:ObservationGroup/vic:RedHorizontalPosition"/>
+			<xs:field xpath="@setupID"/>
+		</xs:keyref>
+		<xs:keyref name="RedVerticalObservationSetupRefs" refer="InstrumentSetupIds">
+			<xs:selector xpath=".//vic:Survey/vic:ObservationGroup/vic:RedVerticalObservation"/>
+			<xs:field xpath="@setupID"/>
+		</xs:keyref>
+
+
+		<xs:keyref name="InstrumentSetupName" refer="InstrumentSetupIds">
+			<xs:selector xpath=".//vic:Survey/vic:InstrumentSetup"/>
+			<xs:field xpath="@stationName"/>
+		</xs:keyref>
+
+		<xs:keyref name="MonumentPntRefs" refer="PointNames">
+			<xs:selector xpath=".//vic:Monuments/vic:Monument"/>
+			<xs:field xpath="@pntRef"/>
+		</xs:keyref>
+		<xs:keyref name="LineStartPntRefs" refer="PointNames">
+			<xs:selector xpath=".//vic:Parcels/vic:Parcel/vic:CoordGeom/vic:Line/Start"/>
+			<xs:field xpath="@pntRef"/>
+		</xs:keyref>
+		<xs:keyref name="IrregularLineStartPntRefs" refer="PointNames">
+			<xs:selector xpath=".//vic:Parcels/vic:Parcel/vic:CoordGeom/vic:IrregularLine/vic:Start"/>
+			<xs:field xpath="@pntRef"/>
+		</xs:keyref>
+		<xs:keyref name="CurveStartPntRefs" refer="PointNames">
+			<xs:selector xpath=".//vic:Parcels/vic:Parcel/vic:CoordGeom/vic:Curve/vic:Start"/>
+			<xs:field xpath="@pntRef"/>
+		</xs:keyref>
+		<xs:keyref name="LineEndPntRefs" refer="PointNames">
+			<xs:selector xpath=".//vic:Parcels/vic:Parcel/vic:CoordGeom/vic:Line/vic:End"/>
+			<xs:field xpath="@pntRef"/>
+		</xs:keyref>
+		<xs:keyref name="IrregularLineEndPntRefs" refer="PointNames">
+			<xs:selector xpath=".//vic:Parcels/vic:Parcel/vic:CoordGeom/vic:IrregularLine/vic:End"/>
+			<xs:field xpath="@pntRef"/>
+		</xs:keyref>
+		<xs:keyref name="CurveEndPntRefs" refer="PointNames">
+			<xs:selector xpath=".//vic:Parcels/vic:Parcel/vic:CoordGeom/vic:Curve/vic:End"/>
+			<xs:field xpath="@pntRef"/>
+		</xs:keyref>
+		<xs:keyref name="CurveCentrePntRefs" refer="PointNames">
+			<xs:selector xpath=".//vic:Parcels/vic:Parcel/vic:CoordGeom/vic:Curve/vic:Center"/>
+			<xs:field xpath="@pntRef"/>
+		</xs:keyref>
+		<xs:keyref name="AddressPointPntRefs" refer="PointNames">
+			<xs:selector xpath=".//vic:Parcels/vic:Parcel/vic:LocationAddress/vic:AddressPoint"/>
+			<xs:field xpath="@pntRef"/>
+		</xs:keyref>
+		<xs:keyref name="ParcelCenterPntRefs" refer="PointNames">
+			<xs:selector xpath=".//vic:Parcels/vic:Parcel/vic:Center"/>
+			<xs:field xpath="@pntRef"/>
+		</xs:keyref>
+		<xs:keyref name="AllocationsPclRefs" refer="ParcelNames">
+			<xs:selector xpath=".//vic:Parcels/vic:Parcel/vic:Parcels/vic:Parcel"/>
+			<xs:field xpath="@pclRef"/>
+		</xs:keyref>
+	</xs:element>
+	<!-- simpleType declarations-->
+	<xs:simpleType name="nonBlankString">
+		<xs:restriction base="xs:string">
+			<xs:minLength value="1"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+    <xs:simpleType name="blankOrDouble">
+		<xs:union>
+            <xs:simpleType>
+                <xs:restriction base='xs:string'>
+                    <xs:length value="0"/>
+                </xs:restriction>
+            </xs:simpleType>
+            <xs:simpleType>
+                <xs:restriction base="xs:double">
+                    <xs:minExclusive value="0"/>
+                </xs:restriction>
+            </xs:simpleType>
+		</xs:union>
+    </xs:simpleType>
+
+    <!-- Special numeric types -->
+	<xs:simpleType name="latLongAngularType">
+		<xs:annotation>
+			<xs:documentation>Latitude and Longitude coordinate angular values. Latitude (range -90 to +90) positive values for the northern hemisphere, negative for southern. Longitude (range -180 to +180) positive values are east of the prime meridian, negative values are west. Values expressed in "decimal dd.mm.ss" units have the format "45.3025" representing 45 degrees 30 minutes and 25 seconds. Both the minutes and seconds must be two digits with a range of 00 to 60.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="decimal dd.mm.ss"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="latLongAngle">
+        <xs:annotation>
+            <xs:documentation>Latitude and Longitude coordinate angular values expressed in latLongAngularType.
+            </xs:documentation>
+        </xs:annotation>
+        <xs:restriction base="xs:double">
+            <xs:pattern value="([-+]?[0-1]?[0-7]?[0-9]).([0-9]+)"/>
+        </xs:restriction>
+    </xs:simpleType>
+	<xs:simpleType name="direction">
+		<xs:annotation>
+			<xs:documentation>Represents a normalized angular value that indicates a horizontal direction, expressed in the specified Direction units. Assume 0 degrees = north
+            </xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:double">
+			<xs:pattern value="([0-2]?[0-9]?[0-9]|[3][0-5][0-9]).([0-5][0-9])([0-5][0-9])"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="distanceRestriction">
+		<xs:annotation>
+			<xs:documentation>Represents a normalized angular value that indicates a horizontal direction, expressed in the specified Direction units. Assume 0 degrees = north
+            </xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:double">
+			<xs:minExclusive value="0"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Specific attribute types for non-ID based referencing to LandXML elements -->
+	<xs:simpleType name="parcelNameRef">
+		<xs:annotation>
+			<xs:documentation>A reference name value referring to a Parcel element name attribute.</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string"/>
+	</xs:simpleType>
+	<xs:simpleType name="parcelNameRefs">
+		<xs:annotation>
+			<xs:documentation>A list of reference names values refering to one or more Parcel element name attributes.</xs:documentation>
+		</xs:annotation>
+		<xs:list itemType="xs:string"/>
+	</xs:simpleType>
+	<!-- LandXML enumeration types -->
+	<xs:simpleType name="clockwise">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="cw"/>
+			<xs:enumeration value="ccw"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="metArea">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="squareMeter"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="metLinear">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="meter"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="metPressure">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="milliBars"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="metTemperature">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="celsius"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="metVolume">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="cubicMeter"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="parcelStateType">
+		<xs:annotation>
+			<xs:documentation>This is an extension of the LandXML state type, but is specific to parcels</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="affected"/>
+			<xs:enumeration value="created"/>
+			<xs:enumeration value="extinguished"/>
+			<xs:enumeration value="referenced"/>
+			<xs:enumeration value="proposed"/>
+			<xs:enumeration value="existing"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="purposeType">
+		<xs:annotation>
+			<xs:documentation>Used by many of the Survey elements</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="normal"/>
+			<xs:enumeration value="traverse"/>
+			<xs:enumeration value="sideshot"/>
+			<xs:enumeration value="topo"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="cgPointID">
+		<xs:restriction base="xs:ID">
+			<xs:pattern value="CGPNT-[0-9]+"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="stateType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="existing"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="ptype">
+        <xs:restriction base="xs:date">
+        </xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="ltype">
+        <xs:list itemType="ptype"/>
+	</xs:simpleType>
+
+	<xs:simpleType name="dateOrEmpty">
+		<xs:restriction base="ltype">
+			<xs:maxLength value="1"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<!--xs:simpleType name="pointStateType">
+		<xs:annotation>
+			<xs:documentation> A subset of LandXML stateType, must only use values from stateType above</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="existing"/>
+			<xs:enumeration value="proposed"/>
+		</xs:restriction>
+	</xs:simpleType-->
+	<xs:simpleType name="surveyType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="compiled"/>
+			<xs:enumeration value="computed"/>
+			<xs:enumeration value="surveyed"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="survPntType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="monument"/>
+			<xs:enumeration value="control"/>
+			<xs:enumeration value="sideshot"/>
+			<xs:enumeration value="boundary"/>
+			<xs:enumeration value="natural boundary"/>
+			<xs:enumeration value="traverse"/>
+			<xs:enumeration value="reference"/>
+			<xs:enumeration value="administrative"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="zoneNumberType">
+		<xs:restriction base="xs:positiveInteger">
+			<xs:minInclusive value="54"/>
+            <xs:maxInclusive value="56"/>
+        </xs:restriction>
+	</xs:simpleType>
+
+	<xs:simpleType name="Point">
+		<xs:annotation>
+			<xs:documentation>A base type used to define point coordinates in the form of "northing easting" or "northing easting elevation". May be used for point lists of 2D or 3D points for features such as surface boundaries, for "station elevation" and "station offset" lists for items such as profiles and cross sections, e.g. "1632.546 2391.045 240.30"</xs:documentation>
+		</xs:annotation>
+		<xs:list itemType="xs:double"/>
+	</xs:simpleType>
+
+	<!-- 3d Point in all 3 coors are optional -->
+	<xs:simpleType name="Point3dOpt">
+		<xs:restriction base="Point">
+			<xs:minLength value="0"/>
+			<xs:maxLength value="3"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- 3d point in all 3 coors are required -->
+	<xs:simpleType name="Point3dReq">
+		<xs:restriction base="Point">
+			<xs:minLength value="3"/>
+			<xs:maxLength value="3"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- 2d Point in which all coors are required -->
+	<xs:simpleType name="Point2dReq">
+		<xs:restriction base="Point">
+			<xs:length value="2"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="instrumentHeightType">
+		<xs:annotation>
+			<xs:documentation>Force a default value of 0</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:double">
+			<xs:enumeration value="0"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- Additional Complex Types added to assist with elements used in several areas with different manditory elements Such as when allocating a Parcel to another parcel or using a pointreference to refer to a point in the CGPoint Table -->
+	<!-- Parcel Type -->
+	<xs:complexType name="ParcelType">
+		<xs:sequence>
+			<xs:choice maxOccurs="unbounded">
+				<xs:element ref="Center" minOccurs="0"/>
+				<xs:element ref="CoordGeom" minOccurs="0"/>
+				<xs:element name="Parcels" type="AllocationsParcelsType" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="Title" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="LocationAddress" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:choice>
+		</xs:sequence>
+		<xs:attribute name="name" type="nonBlankString" use="required"/>
+		<xs:attribute name="oID" type="xs:string" use="optional"/>
+		<xs:attribute name="area" type="blankOrDouble" use="optional"/>
+		<xs:attribute name="desc" type="nonBlankString" use="optional"/>
+		<xs:attribute name="owner" type="xs:string" use="optional"/>
+		<xs:attribute name="parcelType" type="enum:parcelTypeType" use="required"/>
+		<xs:attribute name="state" type="parcelStateType" use="required"/>
+		<xs:attribute name="class" type="enum:parcelClass" use="required"/>
+		<xs:attribute name="useOfParcel" type="enum:useOfParcelType" use="optional"/>
+		<xs:attribute name="parcelFormat" type="enum:parcelFormat" use="optional"/>
+	</xs:complexType>
+	<!-- AllocationsParcels Type - A cut down version of Parcel to restrict the elements used for parcel linkages -->
+	<xs:complexType name="AllocationsParcelsType">
+		<xs:sequence>
+			<xs:element name="Parcel" type="AllocationsParcelType" maxOccurs="unbounded"/>
+		</xs:sequence>
+		<xs:attribute name="desc" type="xs:string" use="optional"/>
+		<xs:attribute name="name" type="xs:string" use="optional"/>
+		<xs:attribute name="state" type="stateType" use="optional"/>
+	</xs:complexType>
+	<!-- AllocationsParcel Type -->
+	<xs:complexType name="AllocationsParcelType">
+		<xs:attribute name="name" type="nonBlankString" use="required"/>
+		<xs:attribute name="pclRef" type="parcelNameRef" use="required"/>
+		<xs:attribute name="lotEntitlements" type="nonBlankString" use="optional"/>
+		<xs:attribute name="liabilityApportionment" type="nonBlankString" use="optional"/>
+	</xs:complexType>
+	<!-- Points defined by references -->
+	<xs:complexType name="PntRefPointType" mixed="true">
+		<xs:annotation>
+			<xs:documentation>All elements derived from PointType will either contain a coordinate text value ( "north east" or "north east elev"), a "pntRef" attribute value, or both. The "pntRef" attribute contains the value of a PointType derived element "name" attribute that exists elsewhere the instance data. If this element has a "pntRef" value, then it's coordinates will be retrieved from the referenced element. If an element contains both a coordinate value and a pntRef, the coordinate value should be used as the point location and the referenced point is either ignored or is used for point attributes such as number or desc.</xs:documentation>
+			<xs:documentation>The featureRef attribute points to a specific named Feature element that contains feature data related to the point.
+                The suggested form is to refer to a feature element within the same CgPoints group or parent element of
+                the point element.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:simpleContent>
+			<xs:extension base="Point3dOpt">
+				<xs:attribute name="pntRef" type="xs:IDREF" use="required"/>
+			</xs:extension>
+		</xs:simpleContent>
+	</xs:complexType>
+
+	<!-- The base point base class -->
+	<xs:complexType name="PointType" mixed="true">
+		<xs:annotation>
+			<xs:documentation>All elements derived from PointType may represent 2D or 3D points. They may contain a coordinate text value ( "north east" or "north east elevation"), a "pntRef" attribute value, or both. The pntRef attribute contains the value of a PointType derived element's name attribute that exists elsewhere the document. If a PointType element has a pntRef attribute, then its coordinates will be retrieved from the referenced element. If an element contains both a coordinate value and a pntRef attribute, the coordinate value should be used as the point location and the referenced point is either ignored or used for point attributes.</xs:documentation>
+			<xs:documentation>The featureRef attribute points to a specific named Feature element that contains feature data related to the point.
+                The suggested form is to refer to a feature element within the same CgPoints group or parent element of
+                the point element.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:simpleContent>
+			<xs:extension base="Point3dOpt">
+				<xs:attribute name="name" type="xs:ID" use="required"/>
+				<xs:attribute name="desc" type="xs:string" use="optional"/>
+				<xs:attribute name="code" type="xs:string" use="optional"/>
+				<xs:attribute name="state" type="stateType" use="required"/>
+				<xs:attribute name="pntRef" type="xs:IDREF" use="optional"/>
+				<xs:attribute name="latitude" type="latLongAngle" use="optional"/>
+				<xs:attribute name="longitude" type="latLongAngle" use="optional"/>
+			</xs:extension>
+			<!--xs:attribute name="state" type="pointStateType" use="required"/-->
+		</xs:simpleContent>
+	</xs:complexType>
+	<!-- 3d Point in which all coords are required -->
+	<xs:complexType name="PointType3dReq">
+		<xs:simpleContent>
+			<xs:extension base="Point3dReq">
+				<xs:attribute name="name" type="xs:ID" use="required"/>
+				<xs:attribute name="desc" type="xs:string" use="optional"/>
+				<xs:attribute name="code" type="xs:string" use="optional"/>
+				<xs:attribute name="state" type="stateType" use="optional"/>
+			</xs:extension>
+			<!--xs:attribute name="state" type="pointStateType" use="optional"/-->
+		</xs:simpleContent>
+	</xs:complexType>
+	<!-- CgPoints collection -->
+	<xs:element name="CgPoints">
+		<xs:annotation>
+			<xs:documentation>A collection of coordinate geometry points</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="CgPoint" maxOccurs="unbounded"/>
+				<!-- Allow nested CgPoints collections -->
+			</xs:sequence>
+			<xs:attribute name="desc" type="xs:string" use="optional"/>
+			<xs:attribute name="name" type="xs:string" use="optional"/>
+			<!--			<xs:attribute name="zoneNumber" type="zoneNumberType" use="optional"/>-->
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="CgPoint">
+		<xs:annotation>
+			<xs:documentation>A coordinate geometry point. The point is identified by the "name" attribute, the data value is a sequence of space delimited numeric values as (Northing Easting) or (Northing Easting Elevation).</xs:documentation>
+		</xs:annotation>
+		<xs:complexType mixed="true">
+			<xs:simpleContent>
+                <xs:extension base="PointType">
+                    <xs:attribute name="oID" type="xs:positiveInteger" use="required"/>
+                    <xs:attribute name="pntSurv" type="survPntType" use="required"/>
+                </xs:extension>
+			</xs:simpleContent>
+		</xs:complexType>
+	</xs:element>
+	<!-- shared elements  -->
+	<xs:element name="FeatureDictionary">
+		<xs:annotation>
+			<xs:documentation>Used to describe specific Feature code and property type values.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:ID" use="required"/>
+			<xs:attribute name="version" type="nonBlankString" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="PntList2D">
+		<xs:annotation>
+			<xs:documentation>A sequential, space delimited list of 2D coordinates that must include the Start and End points (i.e. a minimum of 2 points, 4 values). </xs:documentation>
+			<xs:documentation>It is primarily used for ProfileSurf to hold the list of station/elevations and CrossSectSurf for offset/elevation. </xs:documentation>
+			<xs:documentation>Example: "0.000 86.52 6.267 86.89 12.413 87.01 26.020 87.83" </xs:documentation>
+		</xs:annotation>
+		<xs:simpleType>
+			<xs:restriction base="Point">
+				<xs:minLength value="2"/>
+			</xs:restriction>
+		</xs:simpleType>
+	</xs:element>
+	<xs:element name="PntList3D">
+		<xs:annotation>
+			<xs:documentation>A sequential, space delimited list of 3D coordinates that must include the Start and End points (i.e. a minimum of 2 points, 6 values). </xs:documentation>
+			<xs:documentation>Primarily used to store lists of northing, easting and elevation for Terrain Surface data. </xs:documentation>
+			<xs:documentation>Example: "0.000 86.52 50.0 6.267 86.89 50.0 12.413 87.01 50.0 26.020 87.83 50.0" </xs:documentation>
+		</xs:annotation>
+		<xs:simpleType>
+			<xs:restriction base="Point">
+				<xs:minLength value="3"/>
+			</xs:restriction>
+		</xs:simpleType>
+	</xs:element>
+	<xs:element name="Start" type="PntRefPointType">
+		<xs:annotation>
+			<xs:documentation>The start of a line</xs:documentation>
+			<xs:documentation>Defined by either a coordinate value ("north east" or "north east elev") or a CgPoint number reference "pntRef" attribute.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="End" type="PntRefPointType">
+		<xs:annotation>
+			<xs:documentation>The end of a line</xs:documentation>
+			<xs:documentation>Defined by either a coordinate text value ("north east" or "north east elev") or a CgPoint number reference "pntRef" attribute.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="Center" type="PntRefPointType">
+		<xs:annotation>
+			<xs:documentation>A Center point.</xs:documentation>
+			<xs:documentation>Defined by either a coordinate text value ("north east" or "north east elev") or a CgPoint number reference "pntRef" attribute.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="InstrumentPoint" type="PntRefPointType">
+		<xs:annotation>
+			<xs:documentation>Represents a 2D or 3D Point location for a survey instrument</xs:documentation>
+			<xs:documentation>Defined by either a coordinate text value ("north east" or "north east elev") or a PointType number reference "pntRef" attribute.</xs:documentation>
+		</xs:annotation>
+	</xs:element>
+	<xs:element name="IrregularLine">
+		<xs:annotation>
+			<xs:documentation>An irregular section of a line, such as a river boudary.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Start"/>
+				<xs:element ref="End"/>
+				<xs:choice>
+					<xs:element ref="PntList2D"/>
+					<xs:element ref="PntList3D"/>
+					<!-- Here PntList2D represents 2D planametric coordinate pairs expressed as space delimited Northing Easting pairs. -->
+				</xs:choice>
+			</xs:sequence>
+			<xs:attribute name="desc" type="xs:string" use="required"/>
+			<xs:attribute name="source" type="xs:string" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Curve">
+		<xs:annotation>
+			<xs:documentation>A circular curved section of a line. The radius is the distance from the Start or End to the Center.</xs:documentation>
+			<xs:documentation>The rotation attribute "rot" defines whether the arc travels clockwise or counter-clockwise from the Start to End point.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Start"/>
+				<xs:element ref="Center"/>
+				<xs:element ref="End"/>
+			</xs:sequence>
+			<xs:attribute name="desc" type="xs:string"/>
+			<xs:attribute name="rot" type="clockwise" use="required"/>
+			<xs:attribute name="radius" type="xs:double" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="CoordGeom">
+		<xs:annotation>
+			<xs:documentation>A sequential list of linear elements.</xs:documentation>
+			<xs:documentation>After the sequential list of elements an optional vertical geometry
+                may be defined as a profile, which may be as simple as a list of PVIs (point to point 3D line string).
+            </xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:choice maxOccurs="unbounded">
+					<xs:element ref="Line" minOccurs="0" maxOccurs="unbounded"/>
+					<xs:element ref="IrregularLine" minOccurs="0" maxOccurs="unbounded"/>
+					<xs:element ref="Curve" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:choice>
+			</xs:sequence>
+			<xs:attribute name="name" type="xs:ID" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Line">
+		<xs:annotation>
+			<xs:documentation>A straight section of a line</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Start"/>
+				<xs:element ref="End"/>
+			</xs:sequence>
+			<xs:attribute name="desc" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- Units element -->
+	<xs:element name="Units">
+		<xs:annotation>
+			<xs:documentation>Sets up unit defaults, All Jurisdictions are using the same units.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:choice>
+				<xs:element ref="Metric"/>
+			</xs:choice>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Metric">
+		<xs:annotation>
+			<xs:documentation/>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:attribute name="areaUnit" type="metArea" use="required"/>
+			<xs:attribute name="linearUnit" type="metLinear" use="required"/>
+			<xs:attribute name="volumeUnit" type="metVolume" use="required"/>
+			<xs:attribute name="temperatureUnit" type="metTemperature" use="required"/>
+			<xs:attribute name="pressureUnit" type="metPressure" use="required"/>
+			<xs:attribute name="angularUnit" type="angularType" use="required"/>
+			<xs:attribute name="directionUnit" type="angularType" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- Anglular Units element definition-->
+	<xs:simpleType name="angularType">
+		<xs:annotation>
+			<xs:documentation>Angular values expressed in "decimal dd.mm.ss" units have the numeric
+                format "45.3025" representing 45 degrees 30 minutes and 25 seconds. Both the minutes and seconds must be
+                two characters with a numeric range from 00 to 60.
+			</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="decimal dd.mm.ss"/>
+		</xs:restriction>
+	</xs:simpleType>
+	<!-- CoordinateSystem element -->
+	<xs:element name="CoordinateSystem">
+		<xs:annotation>
+			<xs:documentation>Simplified coordinate systems</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:attribute name="desc" type="nonBlankString" use="optional"/>
+			<xs:attribute name="datum" type="enum:surveyBgDatumType" use="required"/>
+			<xs:attribute name="horizontalDatum" type="enum:horzDatumType" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- Application element -->
+	<xs:element name="Application">
+		<xs:annotation>
+			<xs:documentation>Mandatory element to identify the software used to create the file.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType mixed="true">
+			<xs:sequence>
+				<xs:choice>
+					<xs:element ref="Author" minOccurs="0" maxOccurs="unbounded"/>
+				</xs:choice>
+			</xs:sequence>
+			<xs:attribute name="name" type="nonBlankString" use="required"/>
+			<xs:attribute name="version" type="nonBlankString" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Author">
+		<xs:annotation>
+			<xs:documentation>Optional element to identify the source of the file.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType mixed="true">
+			<xs:attribute name="createdBy" type="nonBlankString" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- Survey collection -->
+	<xs:element name="Survey">
+		<xs:annotation>
+			<xs:documentation>Survey data</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="SurveyHeader"/>
+				<xs:choice minOccurs="0" maxOccurs="unbounded">
+					<xs:element ref="InstrumentSetup" maxOccurs="unbounded"/>
+					<xs:element ref="ObservationGroup"/>
+				</xs:choice>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!--SurveyHeader Element-->
+	<xs:element name="SurveyHeader">
+		<xs:annotation>
+			<xs:documentation>Metadata about the Survey</xs:documentation>
+		</xs:annotation>
+		<xs:complexType mixed="true">
+			<xs:choice maxOccurs="unbounded">
+				<xs:element ref="Annotation" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="AdministrativeArea" maxOccurs="unbounded"/>
+				<xs:element ref="AdministrativeDate" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="Personnel" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="FieldNote" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="PurposeOfSurvey" maxOccurs="unbounded"/>
+				<xs:element ref="HeadOfPower" maxOccurs="unbounded"/>
+			</xs:choice>
+			<xs:attribute name="name" type="nonBlankString" use="required"/>
+			<xs:attribute name="surveyorFirm" type="nonBlankString" use="optional"/>
+			<xs:attribute name="surveyorReference" type="xs:string" use="optional"/>
+			<xs:attribute name="type" type="surveyType" use="required"/>
+			<xs:attribute name="jurisdiction" type="enum:jurisdictionType" use="required"/>
+			<xs:attribute name="surveyFormat" type="enum:surveyFormatType" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- Head Of Power Element -->
+	<xs:element name="HeadOfPower">
+		<xs:annotation>
+			<xs:documentation>The legislation under which the survey was performed</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:attribute name="name" type="enum:headOfPowerType" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- AdministrativeArea Element -->
+	<xs:element name="AdministrativeArea">
+		<xs:annotation>
+			<xs:documentation>Details of an administrative boundary related to a survey</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:attribute name="adminAreaType" type="enum:adminAreaTypeType" use="required"/>
+			<xs:attribute name="adminAreaName" type="nonBlankString" use="required"/>
+			<xs:attribute name="adminAreaCode" type="nonBlankString" use="optional"/>
+			<xs:attribute name="pclRef" type="parcelNameRefs" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- AdministrativeDate Element -->
+	<xs:element name="AdministrativeDate">
+		<xs:annotation>
+			<xs:documentation>Stores individual administrative dates that may vary from jurisdiction to jurisdiction.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:attribute name="adminDateType" type="enum:adminDateTypeType" use="required"/>
+			<xs:attribute name="adminDate" type="xs:date" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- Annotation Element-->
+	<xs:element name="Annotation">
+		<xs:annotation>
+			<xs:documentation>Descriptive string describing an action on survey</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:attribute name="type" type="enum:annotationType" use="required"/>
+			<xs:attribute name="name" type="xs:ID" use="required"/>
+			<xs:attribute name="desc" type="nonBlankString" use="required"/>
+			<xs:attribute name="pclRef" type="parcelNameRefs" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<!--Purpose Of Survey Element-->
+	<xs:element name="PurposeOfSurvey">
+		<xs:annotation>
+			<xs:documentation>The purpose of the survey</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:attribute name="name" type="enum:purpSurvType" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<!--Amendment-->
+	<xs:element name="Amendment">
+		<xs:annotation>
+			<xs:documentation>Information about dealings to link a survey document and titling system</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:attribute name="dealingNumber" type="nonBlankString" use="required"/>
+			<xs:attribute name="amendmentDate" type="xs:date" use="required"/>
+			<xs:attribute name="comments" type="nonBlankString" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Personnel">
+		<xs:annotation>
+			<xs:documentation>Details of persons related to the survey</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:attribute name="name" type="nonBlankString" use="required"/>
+			<xs:attribute name="role" type="enum:surveyorRoleType" use="required"/>
+			<xs:attribute name="regType" type="enum:registrationType" use="required"/>
+			<xs:attribute name="regNumber" type="nonBlankString" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="FieldNote">
+		<xs:annotation>
+			<xs:documentation>Notes are added as text content between the FieldNote element tags.
+                Any valid XML structure may be placed inside this tag.
+            </xs:documentation>
+		</xs:annotation>
+		<xs:complexType mixed="true"/>
+	</xs:element>
+	<xs:element name="InstrumentSetup">
+
+		<xs:annotation>
+			<xs:documentation>An Instrument setup location</xs:documentation>
+		</xs:annotation>
+
+		<xs:complexType>
+
+			<xs:sequence>
+				<xs:choice maxOccurs="unbounded">
+					<xs:element ref="InstrumentPoint"/>
+				</xs:choice>
+			</xs:sequence>
+			<xs:attribute name="id" type="xs:ID" use="required"/>
+
+			<xs:attribute name="stationName" type="xs:IDREF" use="required"/>
+			<xs:attribute name="instrumentHeight" type="instrumentHeightType" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="ObservationGroup">
+		<xs:annotation>
+			<xs:documentation>Collection of Observation elements</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:choice maxOccurs="unbounded">
+					<xs:element ref="ReducedObservation" minOccurs="0"/>
+					<xs:element ref="RedHorizontalPosition" minOccurs="0"/>
+					<xs:element ref="ReducedArcObservation" minOccurs="0"/>
+					<xs:element ref="RedVerticalObservation" minOccurs="0"/>
+				</xs:choice>
+			</xs:sequence>
+			<xs:attribute name="id" type="xs:ID" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- ReducedObservation Referenced to ObservedLine and Observation in UML datamodel-->
+	<xs:element name="ReducedObservation">
+		<xs:annotation>
+			<xs:documentation>The reduced value of an observation. Azimuth is in terms of true north whereas bearing is the projection north. </xs:documentation>
+			<xs:documentation> - maybe this doesn't matter, may need to discuss</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="FieldNote" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+			<xs:attribute name="name" type="xs:ID" use="required"/>
+			<xs:attribute name="desc" type="nonBlankString" use="optional"/>
+			<xs:attribute name="purpose" type="purposeType" use="required"/>
+			<xs:attribute name="setupID" type="xs:IDREF" use="required"/>
+			<xs:attribute name="targetSetupID" type="xs:IDREF" use="required"/>
+			<xs:attribute name="azimuth" type="direction" use="required"/>
+			<xs:attribute name="horizDistance" type="distanceRestriction" use="required"/>
+			<xs:attribute name="equipmentUsed" type="enum:equipmentType" use="optional"/>
+			<xs:attribute name="azimuthAccuracy" type="xs:double" use="optional"/>
+			<xs:attribute name="distanceAccuracy" type="xs:double" use="optional"/>
+			<xs:attribute name="angleAccuracy" type="xs:double" use="optional"/>
+			<xs:attribute name="distanceType" type="enum:distObservationType" use="optional"/>
+			<xs:attribute name="azimuthType" type="enum:observationType" use="optional"/>
+			<xs:attribute name="adoptedAzimuthSurvey" type="nonBlankString" use="optional"/>
+			<xs:attribute name="adoptedDistanceSurvey" type="nonBlankString" use="optional"/>
+			<xs:attribute name="azimuthAdoptionFactor" type="xs:double" use="optional"/>
+			<xs:attribute name="distanceAdoptionFactor" type="xs:double" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="ReducedArcObservation">
+		<xs:annotation>
+			<xs:documentation>Measurement information for an arc. A ReducedArcObservation has very different information to a Curve element.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="FieldNote" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+			<xs:attribute name="name" type="xs:ID" use="required"/>
+			<xs:attribute name="desc" type="xs:string" use="optional"/>
+			<xs:attribute name="purpose" type="purposeType" use="required"/>
+			<xs:attribute name="setupID" type="xs:IDREF" use="required"/>
+			<xs:attribute name="targetSetupID" type="xs:IDREF" use="required"/>
+			<xs:attribute name="chordAzimuth" type="direction" use="required"/>
+			<xs:attribute name="radius" type="distanceRestriction" use="required"/>
+			<xs:attribute name="length" type="distanceRestriction" use="required"/>
+			<xs:attribute name="rot" type="clockwise" use="required"/>
+			<xs:attribute name="equipmentUsed" type="enum:equipmentType" use="optional"/>
+			<xs:attribute name="arcAzimuthAccuracy" type="xs:double" use="optional"/>
+			<xs:attribute name="arcLengthAccuracy" type="xs:double" use="optional"/>
+            <xs:attribute name="arcAngleAccuracy" type="xs:double" use="optional"/>
+			<xs:attribute name="arcType" type="enum:observationType" use="optional"/>
+			<xs:attribute name="adoptedSurvey" type="nonBlankString" use="optional"/>
+			<xs:attribute name="azimuthAdoptionFactor" type="xs:double" use="optional"/>
+			<xs:attribute name="lengthAdoptionFactor" type="xs:double" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- RedHorizontalPosition referenced to Observation & HorizontalPosition class in UML datamodel-->
+
+	<xs:element name="RedHorizontalPosition">
+		<xs:annotation>
+			<xs:documentation>The reduced horizontal position. The coordinates may be derived using various of means.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="FieldNote" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+			<xs:attribute name="desc" type="xs:string" use="optional"/>
+			<xs:attribute name="name" type="xs:ID" use="required"/>
+			<xs:attribute name="oID" type="xs:string" use="required"/>
+
+			<xs:attribute name="setupID" type="xs:IDREF" use="required"/>
+			<xs:attribute name="date" type="dateOrEmpty" use="optional"/>
+			<xs:attribute name="horizontalDatum" type="enum:horzDatumTypeOrEmpty" use="required"/>
+			<xs:attribute name="horizontalAdjustment" type="xs:string" use="optional"/>
+			<xs:attribute name="latitude" type="xs:string" use="required"/>
+			<xs:attribute name="longitude" type="xs:string" use="required"/>
+			<xs:attribute name="horizontalFix" type="enum:horzFixType" use="required"/>
+			<xs:attribute name="currencyDate" type="xs:string" use="optional"/>
+			<xs:attribute name="order" type="enum:horzOrderType" use="optional"/>
+			<xs:attribute name="positionalUncertainity" type="xs:double" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- RedVerticalObservation referenced to Observation & verticalPostion class in UML datamodel -->
+	<xs:element name="RedVerticalObservation">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="FieldNote" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+			<xs:attribute name="desc" type="xs:string" use="optional"/>
+			<xs:attribute name="name" type="xs:ID" use="required"/>
+			<xs:attribute name="oID" type="xs:string" use="required"/>
+			<xs:attribute name="setupID" type="xs:IDREF" use="required"/>
+			<xs:attribute name="date" type="xs:date" use="optional"/>
+			<xs:attribute name="height" type="xs:double" use="required"/>
+			<xs:attribute name="verticalAdjustment" type="xs:string" use="optional"/>
+			<xs:attribute name="verticalFix" type="enum:vertFixType" use="required"/>
+			<xs:attribute name="geosphoid" type="xs:double" use="optional"/>
+			<xs:attribute name="gsDatum" type="enum:horzDatumType" use="optional"/>
+			<xs:attribute name="gsModel" type="enum:gsModelType" use="optional"/>
+			<xs:attribute name="verticalDatum" type="enum:vertDatumType" use="required"/>
+			<xs:attribute name="order" type="enum:vertOrderType" use="optional"/>
+			<xs:attribute name="positionalUncertainity" type="xs:double" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- Monuments collection -->
+	<xs:element name="Monuments">
+		<xs:annotation>
+			<xs:documentation>A collection of Monument elements</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Monument" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Monument">
+		<xs:annotation>
+			<xs:documentation>Information about the monument placed to mark a survey point. The survey point must be represented by a CgPoint and is linked by the pntRef attribute.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:ID" use="required"/>
+			<xs:attribute name="pntRef" type="xs:IDREF" use="required"/>
+			<xs:attribute name="desc" type="nonBlankString" use="optional"/>
+			<xs:attribute name="state" type="enum:monumentState" use="required"/>
+			<xs:attribute name="condition" type="enum:monumentCondition" use="required"/>
+			<xs:attribute name="type" type="enum:monumentType" use="required"/>
+			<xs:attribute name="originSurvey" type="xs:string" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- Parcels collection -->
+	<xs:element name="Parcels">
+		<xs:annotation>
+			<xs:documentation>A collection of Parcel elements</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Parcel" type="ParcelType" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Title">
+		<xs:annotation>
+			<xs:documentation>Information about an interest.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType mixed="true">
+			<xs:attribute name="name" type="nonBlankString" use="required"/>
+			<xs:attribute name="titleType" type="enum:titleTypeType" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="LocationAddress">
+		<xs:annotation>
+			<xs:documentation>Defines the location or positional address of a parcel. LocationAddress is not designed to be a postal address (e.g. it has no post or zip code). The element must handle primary addresses and aliases if required.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="ComplexName" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="RoadName" maxOccurs="unbounded"/>
+				<xs:element ref="AdministrativeArea" maxOccurs="unbounded"/>
+				<xs:element ref="AddressPoint" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+			<xs:attribute name="addressType" type="enum:addressTypeType" use="required"/>
+			<xs:attribute name="flatType" type="enum:flatTypeType" use="optional"/>
+			<xs:attribute name="flatNumber" type="xs:string" use="optional"/>
+			<xs:attribute name="floorLevelType" type="enum:floorLevelTypeType" use="optional"/>
+			<xs:attribute name="floorLevelNumber" type="xs:string" use="optional"/>
+			<xs:attribute name="numberFirst" type="xs:int" use="optional"/>
+			<xs:attribute name="numberSuffixFirst" type="xs:string" use="optional"/>
+			<xs:attribute name="numberLast" type="xs:int" use="optional"/>
+			<xs:attribute name="numberSuffixLast" type="xs:string" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="ComplexName">
+		<xs:complexType>
+			<xs:attribute name="desc" type="xs:string" use="required"/>
+			<xs:attribute name="priority" type="xs:int" use="required"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="RoadName">
+		<xs:complexType>
+			<xs:attribute name="roadNameType" type="enum:roadNameTypeType" use="required"/>
+			<xs:attribute name="roadName" type="xs:string" use="required"/>
+			<xs:attribute name="roadNameSuffix" type="enum:roadNameSuffixType" use="optional"/>
+			<xs:attribute name="roadType" type="enum:roadTypeType" use="required"/>
+			<xs:attribute name="pclRef" type="parcelNameRefs" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="AddressPoint">
+		<xs:annotation>
+			<xs:documentation>Represents a 2D or 3D Address Point. An AddressPoint is a geocoded address reference.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:simpleContent>
+				<xs:extension base="PntRefPointType">
+					<xs:attribute name="addressPointType" type="enum:addressPointTypeType" use="required"/>
+				</xs:extension>
+			</xs:simpleContent>
+		</xs:complexType>
+	</xs:element>
+	<!-- PlanFeatures collection -->
+	<xs:element name="PlanFeatures">
+		<xs:annotation>
+			<xs:documentation>A collection of PlanFeature elements</xs:documentation>
+			<xs:documentation>Typically a PlanFeatures element will contain a collection of similar items.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="PlanFeature" maxOccurs="unbounded"/>
+			</xs:sequence>
+			<xs:attribute name="name" type="xs:string" use="required"/>
+			<xs:attribute name="desc" type="xs:string" use="optional"/>
+		</xs:complexType>
+	</xs:element>
+	<!-- PlanFeature class -->
+	<xs:element name="PlanFeature">
+		<xs:annotation>
+			<xs:documentation>A plan feature not otherwise defined by the schema, such as building footprints, guard rails, tree lines, lightpoles or signs.</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:choice>
+				<xs:element ref="CoordGeom"/>
+			</xs:choice>
+			<xs:attribute name="desc" type="xs:string" use="optional"/>
+			<xs:attribute name="name" type="xs:string" use="required"/>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
