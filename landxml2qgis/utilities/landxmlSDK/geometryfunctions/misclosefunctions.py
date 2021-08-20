@@ -17,13 +17,19 @@ class Misclose:
         self.natural_boundary = False
         self.sum_of_distances = 0
         self.calculated_polygon = self.set_calculated_polygon(line_order)
-        self.calculated_area = self.calculated_polygon.area
+        self.calculated_area = self.set_calcluated_area()
         self.misclose_tolerance = None
         self.closed = self.set_polygon_closed(line_order)
         self.missing_lines = []
         self.has_misclose = False
         self.calculate_misclose(line_order)
 
+    def set_calcluated_area(self):
+        if self.calculated_polygon is not None:
+            a = self.calculated_polygon.area
+        else:
+            a = None
+        return a
     def calculate_misclose(self, line_order):
         start_e, start_n = 0, 0
         end_e, end_n = 0, 0
@@ -60,10 +66,12 @@ class Misclose:
     def set_calculated_polygon(line_order):
         polygon = []
         for line in line_order:
-
             for point in line.geometry.coords[:-1]:
                 polygon.append(point)
-        return sg.Polygon(polygon)
+        if len(polygon) > 2:
+            return sg.Polygon(polygon)
+        else:
+            return None
 
 
 def loop_checker(geom, start_node, mis_tol=None):
