@@ -436,6 +436,8 @@ class LandXML2QGIS:
             for fn in self.filenames:
                 data = landxml.parse(fn, silence=True, print_warnings=False)
                 geom = Geometries(data, self.mis_tol)
+                if self.recalc is True:
+                    geom.recalc_geometries(ref_point=geom.ccc, swing=self.swing)
                 outpath = self.out_paths.get(fn)
                 outpath.mkdir(parents=True, exist_ok=True)
                 dna_geom = None
@@ -494,7 +496,8 @@ class LandXML2QGIS:
                 QGISLayer(points, layer_type='Point', styles=layer_styles, process=True, suffix='Points')
             if len(loops) > 0 and self.only_dna is False:
                 layer_styles = [v for k, v in styles.items() if 'loop' in k and 'dna' not in k]
-                QGISLayer(loops, layer_type='LineString', styles=layer_styles, process=True, suffix='Loops')
+                QGISLayer(loops, layer_type='LineString', styles=layer_styles, process=True, suffix='Loops',
+                          fields_to_remove=['likely'])
 
             if len(outliers) > 0:
                 layer_styles = [v for k, v in styles.items() if 'out' in k and 'dna' in k]

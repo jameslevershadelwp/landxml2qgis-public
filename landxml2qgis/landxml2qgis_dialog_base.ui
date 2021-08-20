@@ -1089,22 +1089,6 @@
  <connections>
   <connection>
    <sender>button_box</sender>
-   <signal>accepted()</signal>
-   <receiver>LandXML2QGISDialogBase</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>button_box</sender>
    <signal>rejected()</signal>
    <receiver>LandXML2QGISDialogBase</receiver>
    <slot>reject()</slot>
@@ -1180,6 +1164,70 @@
     <hint type="destinationlabel">
      <x>86</x>
      <y>620</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>recalcCheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>swingCheckBox</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>99</x>
+     <y>281</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>310</x>
+     <y>281</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>runDNACheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>onlyDNACheckBox</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>113</x>
+     <y>346</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>316</x>
+     <y>346</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>runDNACheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>outlierCheckBox</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>113</x>
+     <y>346</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>520</x>
+     <y>346</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>button_box</sender>
+   <signal>accepted()</signal>
+   <receiver>LandXML2QGISDialogBase</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>283</x>
+     <y>588</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>428</x>
+     <y>308</y>
     </hint>
    </hints>
   </connection>
