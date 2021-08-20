@@ -3,6 +3,7 @@ from shapely.geometry import MultiLineString
 from shapely.ops import linemerge
 
 
+
 class Loop:
     def __init__(self, key, loop, lines):
         self.loop = loop.get('loop')
@@ -10,9 +11,8 @@ class Loop:
         self.angles = loop.get('angles')
         self.likely_names = loop.get('likely')
         self.likely = self.set_likely(lines)
-        self.likely_geometry = self.set_likely_geometry()
-        self.loop_details = self.set_loop_details(lines)
-        self.geometry = self.set_geometry()
+        #self.likely_geometry = self.set_likely_geometry()
+        self.geometry = self.set_geometry(lines)
         self.crs = self.set_crs_from_first_line(lines)
 
         # group for loop error distance estimated based on the tolerance set to a factor of 10
@@ -25,17 +25,26 @@ class Loop:
             break
         return crs
 
-    # dict of line geom that are in loop
-    def set_loop_details(self, lines):
-        return {k: v for k, v in lines.items() if k in self.loop}
-
     # just set the geometry and turn it into a multiline
-    def set_geometry(self):
-        return MultiLineString([v.geometry for k, v in self.loop_details])
+    def set_geometry(self, lines):
+        loop_lines = []
+        loops = []
+        for l in self.loop:
+            for i in l:
+                loops.append(i)
+        for k, v in lines.items():
+            if v.name in loops:
+                loop_lines.append(v.geometry)
+        return MultiLineString(loop_lines)
 
     # likely cadidates dict of lines
     def set_likely(self, lines):
-        return {k: v for k, v in lines.items() if k in self.likely_names}
+        likely_lines = {}
+        for k, v in lines.items():
+            if v.name in self.likely_names:
+                v.likely_candidate = True
+                likely_lines[k] = v
+        return likely_lines
 
     # just set the likely geometry and turn it into a multiline
     def set_likely_geometry(self):

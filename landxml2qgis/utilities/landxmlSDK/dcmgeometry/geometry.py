@@ -72,8 +72,15 @@ class Geometries:
 
         loops = loop_checker(self, self.ccc, mis_tol=mis_tol)
         f_loops = {}
+        all_likely = []
         for k, v in loops.items():
             f_loops[k] = Loop(k, v, self.lines)
+            all_likely.extend(v.get('likely',[]))
+        all_likely = set(all_likely)
+        for k, v in self.lines.items():
+            if v.name in all_likely:
+                v.likely_candidate = True
+
         return f_loops
 
     def set_ccc(self):
@@ -165,14 +172,12 @@ class Geometries:
             for k, v in self.points.items():
                 self.points[k].geometry = sa.rotate(v.geometry, angle=-swing_value,
                                                     origin=self.points.get(ref_point).geometry)
-        self.lines = ArcLineGeomFactory().build(self.landxml, self.points, self.get_is_2_point(), self.crs)
-        self.polygons = PolygonGeomFactory().build(self.landxml, self.lines, self.points, self.crs)
+        self.update_geometries()
 
     def transform_geometries(self, out_proj):
 
         self.points = transform_geoms(self.points, self.crs, out_proj)
         self.lines = transform_geoms(self.lines, self.crs, out_proj)
-
         self.polygons = transform_geoms(self.polygons, self.crs, out_proj)
         self.crs = out_proj
 
@@ -282,7 +287,7 @@ class Geometries:
         if x != 0 and y != 0:
             for k, v in self.points.items():
                 self.points[k].geometry = sa.translate(v.geometry, x, y)
-            self.process_affinity()
+            self.update_geometries()
 
     def apply_swing(self, angle=0, origin='centre'):
         """origin here should be the point you want to swing the plan around.
@@ -292,21 +297,15 @@ class Geometries:
         if angle != 0:
             for k, v in self.points.items():
                 self.points[k].geometry = sa.rotate(angle, origin)
-            self.process_affinity()
+            self.update_geometries()
 
 
     def apply_affine_transformation(self, mat=None):
         if mat is not None:
             for k, v in self.points.items():
                 self.points[k].geometry = sa.affine_transform(v.geometry, mat)
-            self.process_affinity()
+            self.update_geometries()
 
-    def process_affinity(self):
-        # self.lines = iterate_geoms(self.lines)
-        # self.polygons = iterate_geoms(self.polygons)
-        self.lines = ArcLineGeomFactory().build(self.landxml, self.points, self.get_is_2_point(), self.crs)
-        self.survey_graph = SurveyGraph(self.lines, self.points)
-        self.polygons = PolygonGeomFactory().build(self.landxml, self.lines, self.points, self.crs)
 
     def update_geometries(self):
         self.lines = ArcLineGeomFactory().build(self.landxml, self.points, self.get_is_2_point(), self.crs)

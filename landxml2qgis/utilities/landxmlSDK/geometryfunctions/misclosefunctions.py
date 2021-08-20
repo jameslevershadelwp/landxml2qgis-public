@@ -30,6 +30,7 @@ class Misclose:
         else:
             a = None
         return a
+
     def calculate_misclose(self, line_order):
         start_e, start_n = 0, 0
         end_e, end_n = 0, 0
@@ -107,6 +108,7 @@ def loop_checker(geom, start_node, mis_tol=None):
         mis_bearing = f.misclose_bearing
 
         if mis_tol is None:
+
             mis_tol = f.misclose_tolerance
 
         if mis_dist > mis_tol:
