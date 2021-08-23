@@ -288,28 +288,30 @@ class LandXML2QGIS:
         fname = None
         aws_name = self.dlg.AWS_LineEdit.text()
         if len(aws_name) > 0:
-            lga_name = self.dlg.LGAComboBox.currentText()
-            lga_names = []
-            if len(lga_name) > 0:
-                lga_names.append(lga_name)
-            # if len(lga_names) == 0 and self.dlg.checkAllLGAsCheckBox.isChecked() is True:
-            #     import pickle
-            #     lgas = pickle.load(str(Path(self.cwd, 'resources', 'lga_list.pkl')))
-            #     lga_names.extend([lga for lga in lgas if lgas not in lga_names])
-            for lga in lga_names:
-                s3 = boto3.resource('s3')
-                my_bucket = s3.Bucket('dcm-file-sharing')
-                try:
+            outpath = Path(self.dlg.lineEdit_3.text(), aws_name)
+            outxml = Path(outpath, f'{aws_name}.xml')
+            if self.dlg.overwriteCheckBox.isChecked() is True or outxml.exists() is False:
+                QMessageBox.information(None, "Downloading plan",
+                                        'Found plan in the repository, dowloading to:\n'
+                                        f'{str(outxml)}')
+                bucket_name = 'dcm-file-sharing'
+                outpath.mkdir(parents=True, exist_ok=True)
+                url = f'https://{bucket_name}.s3.amazonaws.com/all/{aws_name}.xml'
+                headers = {'Host': f'{bucket_name}.s3.ap-southeast-2.amazonaws.com'}
+                r = requests.get(url, headers=headers)
+
+                if r.ok is True:
                     outpath = Path(self.dlg.lineEdit_3.text(), aws_name)
-                    outxml = Path(outpath, f'{aws_name}.xml')
                     outpath.mkdir(parents=True, exist_ok=True)
-                    outname = f'{outpath}/{aws_name}.xml'
-                    if outxml.exists() is False or self.dlg.overwriteCheckBox.isChecked() is True:
-                        my_bucket.download_file(f'{lga}/{aws_name}.xml', outxml)
-                    fname = outname
-                except:
-                    QMessageBox.information(None, "Idiot",
+                    outxml = Path(outpath, f'{aws_name}.xml')
+                    with open(outxml, 'wb') as open_file:
+                        open_file.write(r.content)
+                    fname = str(outxml)
+                else:
+                    QMessageBox.information(None, "No plan",
                                             'Couldnt find plan in the repository')
+            elif outxml.exists() is True:
+                fname = str(outxml)
 
 
         if fname is None:
@@ -320,13 +322,15 @@ class LandXML2QGIS:
             
         folders = self.dlg.lineEdit_4.text()
         if len(folders) > 0:
-            fnames = [str(Path(folders, f)) for f in os.listdir(folders) if f.endswith('.xml')]
+            fnames = []
+            for directory, fs, filenames in os.path.walk(folders):
+                fnames.extend([str(Path(directory, f)) for f in filenames if f.endswith('.xml')])
 
         if len(fnames) > 0:
             self.filenames = fnames
             self.main_plan = os.path.split(fnames[0])[-1][:-4]
         else:
-            QMessageBox.information(None, "Idiot",
+            QMessageBox.information(None, "No plan",
                                     'You need to type in a plan')
             raise
 

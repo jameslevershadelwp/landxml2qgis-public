@@ -8,10 +8,12 @@ import boto3
 import pickle as pkl
 import requests
 
-infile = '/Users/jamesleversha/Downloads/LP056005.xml'
-data = landxml.parse(infile, silence=True, print_warnings=False)
-geom = Geometries(data, mis_tol=.1)
-geom.recalc_geometries(geom.ccc, swing=True)
-print(geom.lines.get(('CGPNT-455', 'CGPNT-456')).__dict__)
-for k, loop in geom.loops.items():
-    print(k, loop.__dict__)
+import requests
+
+filename = 'PS539712H'
+url = f'https://dcm-file-sharing.s3.amazonaws.com/all/{filename}.xml'
+headers = {'Host': 'dcm-file-sharing.s3.ap-southeast-2.amazonaws.com'}
+r = requests.get(url, headers=headers)
+outfile = f'/Users/jamesleversha/Downloads/test/test/{filename}.xml'
+with open(outfile, 'wb') as open_file:
+    open_file.write(r.content)
