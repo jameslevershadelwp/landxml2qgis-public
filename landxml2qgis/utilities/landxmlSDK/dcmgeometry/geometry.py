@@ -15,7 +15,7 @@ from utilities.landxmlSDK.dcmgeometry.surveygraph import SurveyGraph
 from utilities.landxmlSDK.dcmgeometry.factories.arclinefactory import ArcLineGeomFactory
 from utilities.landxmlSDK.dcmgeometry.factories.pointfactory import PointGeomFactory
 from utilities.landxmlSDK.dcmgeometry.lines import LineGeom
-from utilities.landxmlSDK.dcmgeometry.loops import Loop
+from utilities.landxmlSDK.dcmgeometry.loops import Loops
 from utilities.landxmlSDK.landxml.landxml import CgPoint, InstrumentSetup, InstrumentPoint, ReducedObservation
 from utilities.landxmlSDK.geometryfunctions.misclosefunctions import loop_checker
 
@@ -74,7 +74,7 @@ class Geometries:
         f_loops = {}
         all_likely = []
         for k, v in loops.items():
-            f_loops[k] = Loop(k, v, self.lines)
+            f_loops[k] = Loops(k, v, self.lines)
             all_likely.extend(v.get('likely',[]))
         all_likely = set(all_likely)
         for k, v in self.lines.items():

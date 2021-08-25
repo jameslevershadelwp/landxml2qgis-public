@@ -489,6 +489,9 @@ class LandXML2QGIS:
                 QGISLayer(polygons, layer_type='Polygon', styles=layer_styles, process=True, suffix='Polygons',
                           fields_to_remove=['line_order', 'original_geom', 'coord_lookup', 'inner_angles',
                                             'point_lookup', 'calculated_polygon', 'polygon_points'])
+            if len(loops) > 0 and self.only_dna is False:
+                layer_styles = [v for k, v in styles.items() if 'loop' in k and 'dna' not in k]
+                QGISLayer(loops, layer_type='MultiLineString', styles=layer_styles, process=True, suffix='Loops')
             if len(lines) > 0 and self.only_dna is False:
                 layer_styles = [v for k, v in styles.items() if 'lin' in k and 'dna' not in k]
                 QGISLayer(lines, layer_type='LineString', styles=layer_styles, process=True, suffix='Lines')
@@ -498,10 +501,6 @@ class LandXML2QGIS:
             if len(points) > 0 and self.only_dna is False:
                 layer_styles = [v for k, v in styles.items() if 'poi' in k and 'dna' not in k]
                 QGISLayer(points, layer_type='Point', styles=layer_styles, process=True, suffix='Points')
-            if len(loops) > 0 and self.only_dna is False:
-                layer_styles = [v for k, v in styles.items() if 'loop' in k and 'dna' not in k]
-                QGISLayer(loops, layer_type='LineString', styles=layer_styles, process=True, suffix='Loops',
-                          fields_to_remove=['likely'])
 
             if len(outliers) > 0:
                 layer_styles = [v for k, v in styles.items() if 'out' in k and 'dna' in k]

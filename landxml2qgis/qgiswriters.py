@@ -8,7 +8,7 @@ from utilities.landxmlSDK.dcmgeometry.lines import LineGeom
 from utilities.landxmlSDK.dcmgeometry.arcs import ArcGeom
 from utilities.landxmlSDK.dcmgeometry.polygons import PolygonGeom
 from utilities.landxmlSDK.dcmgeometry.points import PointGeom
-from utilities.landxmlSDK.dcmgeometry.loops import Loop
+from utilities.landxmlSDK.dcmgeometry.loops import Loops, Loop
 from utilities.landxmlSDK.geometryfunctions.misclosefunctions import Misclose
 from utilities.landxmlSDK.dna.dnareaders import DNAAdjustedMeasures
 
@@ -193,9 +193,15 @@ class QGISPolygonGeometry(PolygonGeom, Misclose, QGISGeometry):
 
 
 # this will need to change
-class QGISLoopGeometry(Loop, QGISGeometry):
-    def __init__(self, loop_object):
-        self.set_attributes(loop_object)
+class QGISLoopGeometry:
+    def __init__(self):
+        self.geometry = None
+        self.loop = None
+        self.likely_candidate = None
+        self.distances = None
+        self.angles = None
+        self.crs = None
+        self.group_value = None
 
 
 # this will need to change
@@ -254,7 +260,21 @@ class QGISAllObjects:
         return {k: QGISPointGeometry(v) for k, v in points.items()}
 
     def set_loops(self, loops):
-        return {k: QGISLoopGeometry(v) for k, v in loops.items()}
+        count = 0
+        qloops = {}
+        for k, v in loops.items():
+            for item in v.loops + v.likely:
+                loop = QGISLoopGeometry()
+                loop.geometry = QgsGeometry.fromWkt(item.geometry.wkt)
+                loop.likely_candidate = item.likely_candidate
+                loop.loop = str(item.loop)
+                loop.angles = str(v.angles)
+                loop.distances = str(v.distances)
+                loop.crs = v.crs
+                loop.group_value = v.group_value
+                qloops[count] = loop
+                count += 1
+        return qloops
 
     def set_outliers(self, outliers):
         return {k: QGISOutliers(v, crs=self.crs) for k, v in outliers.items()}
