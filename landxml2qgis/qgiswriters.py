@@ -221,6 +221,7 @@ class QGISAllObjects:
         self.dna_lines = None
         self.dna_points = None
         self.dna_polygons = None
+        self.dna_loops = None
 
         # self.dna_loops = None
         # self.dna_outliers = None
@@ -228,6 +229,7 @@ class QGISAllObjects:
             self.dna_arcs, self.dna_lines = self.set_arc_lines(dna_geom.lines)
             self.dna_points = self.set_points(dna_geom.points)
             self.dna_polygons = self.set_polygons(dna_geom.polygons)
+            self.dna_loops = self.set_loops(dna_geom.loops)
             # self.dna_loops = self.set_loops(dna_geom.loops)
             if outliers is not None:
                 # load the outliers here

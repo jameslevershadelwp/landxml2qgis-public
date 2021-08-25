@@ -261,13 +261,14 @@ class LandXML2QGIS:
         arc_style_m = Path(self.cwd, 'styles', 'arc.qml')
         arc_style_lf = Path(self.cwd, 'styles', 'arc_lf.qml')
         loop_style = Path(self.cwd, 'styles', 'loop.qml')
-        outlier_style = Path(self.cwd, 'styles', 'outlier.qml')
+        outlier_style = Path(self.cwd, 'styles', 'out.qml')
+        dna_out_style = Path(self.cwd, 'styles', 'out_dna.qml')
 
         styles = {'vl_poi': point_style, 'vl_lin_m': line_style_m, 'vl_arc': arc_style_m, 'vl_pol': poly_style,
                   'vl_loop': loop_style, 'vl_lin_lf': line_style_lf, 'vl_arc_lf': arc_style_lf,
                   'vl_pol_dnaadj': dna_poly_style, 'vl_poi_dnaadj': dna_point_style,
                   'vl_lin_dnaadj': line_style_m, 'vl_arc_dnaadj': arc_style_m, 'vl_loop_dnaadj': loop_style,
-                  'vl_out_dnaadj': outlier_style, 'vl_lin_dnaadj_lf': line_style_lf, 'vl_arc_dnaadj_lf': arc_style_lf}
+                  'vl_out_dnaadj': dna_out_style, 'vl_lin_dnaadj_lf': line_style_lf, 'vl_arc_dnaadj_lf': arc_style_lf}
         for k, v in styles.items():
             if v.exists() is False:
                 styles[k] = None
@@ -393,7 +394,7 @@ class LandXML2QGIS:
         dna_results = DNAReaders(dna_adj_fp)
         dna_coords = dna_results.coordinates
         dna_outliers = dna_results.get_outliers()
-
+        result = dna_results.global_stats.chi_squared_test
         dna_geom = deepcopy(geom)
         new_points = {}
         for k, v in dna_geom.points.items():
@@ -403,7 +404,7 @@ class LandXML2QGIS:
                 new_points[k] = v
         dna_geom.points = new_points
         dna_geom.update_geometries()
-        return dna_geom, dna_outliers
+        return dna_geom, dna_outliers, result
 
     def run(self):
         """Run method that performs all the real work"""
@@ -436,7 +437,9 @@ class LandXML2QGIS:
             polygons = {}
             dna_polygons = {}
             loops = {}
+            dna_loops = {}
             outliers = {}
+            result = ''
             for fn in self.filenames:
                 data = landxml.parse(fn, silence=True, print_warnings=False)
                 geom = Geometries(data, self.mis_tol)
@@ -448,7 +451,7 @@ class LandXML2QGIS:
                 dna_outliers = []
 
                 if self.dna is True:
-                    dna_geom, dna_outliers = self.process_dna(geom, fn, outpath)
+                    dna_geom, dna_outliers, result = self.process_dna(geom, fn, outpath)
                     if self.dlg.lineCheckBox.isChecked() is False:
                         dna_outliers = []
                 qgis_geoms = QGISAllObjects(geom, dna_geom, dna_outliers)
@@ -478,6 +481,8 @@ class LandXML2QGIS:
                 if self.dlg.loopCheckBox.isChecked() is True:
                     if len(qgis_geoms.loops) > 0:
                         loops[geom.survey_number] = qgis_geoms.loops
+                        if self.dna is True:
+                            dna_loops[geom.survey_number] = qgis_geoms.dna_loops
 
                 if self.dlg.outlierCheckBox.isChecked() is True:
                     if len(dna_outliers) > 0:
@@ -504,23 +509,29 @@ class LandXML2QGIS:
 
             if len(outliers) > 0:
                 layer_styles = [v for k, v in styles.items() if 'out' in k and 'dna' in k]
-                QGISLayer(outliers, layer_type='LineString', styles=layer_styles, process=True, suffix='DNA_Outliers')
+                QGISLayer(outliers, layer_type='LineString', styles=layer_styles, process=True,
+                          suffix=f'DNA_Outliers_{result}')
+
+            if len(dna_loops) > 0:
+                layer_styles = [v for k, v in styles.items() if 'loop' in k and 'dna' not in k]
+                QGISLayer(dna_loops, layer_type='MultiLineString', styles=layer_styles, process=True,
+                          suffix='DNA_Loops')
 
             if len(dna_lines) > 0:
                 layer_styles = [v for k, v in styles.items() if 'lin' in k and 'dna' in k]
-                QGISLayer(dna_lines, layer_type='LineString', styles=layer_styles, process=True, suffix='DNA_Lines')
+                QGISLayer(dna_lines, layer_type='LineString', styles=layer_styles, process=True,
+                          suffix=f'DNA_Lines_{result}')
             if len(dna_arcs) > 0:
                 layer_styles = [v for k, v in styles.items() if 'arc' in k and 'dna' in k]
-                QGISLayer(dna_arcs, layer_type='LineString', styles=layer_styles, process=True, suffix='DNA_Arcs')
+                QGISLayer(dna_arcs, layer_type='LineString', styles=layer_styles, process=True,
+                          suffix=f'DNA_Arcs_{result}')
             if len(dna_points) > 0:
                 layer_styles = [v for k, v in styles.items() if 'poi' in k and 'dna' in k]
-                QGISLayer(dna_points, layer_type='Point', styles=layer_styles, process=True, suffix='DNA_Points')
+                QGISLayer(dna_points, layer_type='Point', styles=layer_styles, process=True,
+                          suffix=f'DNA_Points_{result}')
             if len(dna_polygons) > 0:
                 layer_styles = [v for k, v in styles.items() if 'pol' in k and 'dna' in k]
-                QGISLayer(dna_polygons, layer_type='Polygon', styles=layer_styles, process=True, suffix='DNA_Polygons')
-
-            if len(outliers) > 0:
-                layer_styles = [v for k, v in styles.items() if 'out' in k and 'dna' in k]
-                QGISLayer(outliers, layer_type='LineString', styles=layer_styles, process=True, suffix='DNA_Outliers')
+                QGISLayer(dna_polygons, layer_type='Polygon', styles=layer_styles, process=True,
+                          suffix=f'DNA_Polygons_{result}')
 
             self.save_settings()

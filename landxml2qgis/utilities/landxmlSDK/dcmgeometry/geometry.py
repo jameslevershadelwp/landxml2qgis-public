@@ -432,7 +432,7 @@ class Geometries:
             geoms.remove(line_geom)
             if len(geoms) > 0:
                 prepped_geom = prep(line_geom)
-                hits = list(filter(prepped_geom.intersects, geoms))
+                hits = list(filter(prepped_geom.crosses, geoms))
                 if len(hits) > 0:
                     self.lines[item].overlapping = True
                     for hit in hits:

@@ -238,7 +238,7 @@ class DNAReaders:
             for line in text:
                 if ('---------' in line and 'M Station 1 ' not in prev_line
                                             and 'Station             Const' not in prev_line):
-                    count +=1
+                    count += 1
                 if '----------' not in line:
                     sect = dummy_sects.get(count, [])
                     if 'M Station 1 ' in line:
