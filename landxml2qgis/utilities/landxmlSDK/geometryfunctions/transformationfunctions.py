@@ -374,7 +374,7 @@ def get_distance_between_rotations(dist, base_array, target_array, source_polygo
     return dist
 
 
-def rubber_sheet(geom, polygon_source, polygon_target):
+def rubber_sheet(geom, polygon_source, polygon_target, snap_to_line=False, snap_to_line_tolerance=.1):
     # set some thresholds
     angle_threshold = 45
     bearing_threshold = 30
@@ -466,5 +466,16 @@ def rubber_sheet(geom, polygon_source, polygon_target):
             if len(target_points) == 0:
                 # break loop if no close points are found
                 x = False
+
+    if snap_to_line is True:
+        source_exterior = polygon_source.geometry.exterior
+        for k, v in geom.points.items():
+            if v.associated_point_oid is None:
+                nearest = so.nearest_points(source_exterior, v.geometry)
+                distance = calc_distance(*nearest)
+                if distance < snap_to_line_tolerance:
+                    v.geometry = nearest[1]
+                    geom.points[k] = v
+
     geom.update_geometries()
     return geom
