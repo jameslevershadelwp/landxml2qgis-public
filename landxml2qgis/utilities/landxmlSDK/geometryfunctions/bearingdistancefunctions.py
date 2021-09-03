@@ -151,7 +151,7 @@ def define_circle_lsq(p1, p2, p3):
 def process_angles(frm, ref, to, ring, points):
 
     if len(ring) < 2:
-        return None, None, None
+        return None
     else:
         if frm is None:
             if points.get(ref) == points.get(ring[-1]):
@@ -176,7 +176,8 @@ def process_angles(frm, ref, to, ring, points):
         tf = calc_inside_360(math.degrees(calc_bearing(nxt_c, prev_c)))
         tfd = calc_distance(nxt_c, prev_c)
         height = math.sqrt((td * td) + (tfd / 2) * (tfd / 2))
-        estimate_centre, estimate_radius = define_circle_lsq(prev_c.coords[:][0], item_c.coords[:][0], nxt_c.coords[:][0])
+        estimate_centre, estimate_radius = define_circle_lsq(prev_c.coords[:][0], item_c.coords[:][0],
+                                                             nxt_c.coords[:][0])
         if estimate_centre is not None:
             estimate_centre = sg.Point(estimate_centre)
         return {'angle': a, 'to_bearing': t, 'from_bearing': f, 'to_from_bearing': tf,

@@ -380,10 +380,12 @@ def rubber_sheet(geom, polygon_source, polygon_target):
     bearing_threshold = 30
     distance_thresholds = [10, 5, 1]
     distance_threshold = 10
+    coord_decimals = polygon_target.coord_decimals
 
     for sp in polygon_source.polygon_points.get('all'):
         # get all target points and stick them in a multipoint closest point lookup.
         target_points = [polygon_target.point_lookup.get(p) for p in polygon_target.polygon_points.get('all')]
+
         point_value = polygon_source.point_lookup.get(sp)
 
         x = True
@@ -397,7 +399,11 @@ def rubber_sheet(geom, polygon_source, polygon_target):
             distance = calc_distance(*nearest)
 
             tc = tuple(nearest[1].coords)[0]
-            tp = polygon_target.coord_lookup.get(tc)
+            if coord_decimals is None:
+                tp = polygon_target.coord_lookup.get(tc)
+            else:
+                tcr = (round(nearest[1].x, coord_decimals), round(nearest[1].y, coord_decimals))
+                tp = polygon_target.coord_lookup.get(tcr)
 
             tp_angle = polygon_target.inner_angles.get(tp)
 
@@ -460,4 +466,5 @@ def rubber_sheet(geom, polygon_source, polygon_target):
             if len(target_points) == 0:
                 # break loop if no close points are found
                 x = False
+    geom.update_geometries()
     return geom

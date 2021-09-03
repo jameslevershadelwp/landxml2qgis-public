@@ -34,7 +34,7 @@
 
 A library for calculating 4x4 matrices for translating, rotating, reflecting,
 scaling, shearing, projecting, orthogonalizing, and superimposing arrays of
-3D homogeneous coordinates as well as for converting between rotation matrices,
+3D homogeneous coordinates as well as for converting between arc_rotation matrices,
 Euler angles, and quaternions. Also includes an Arcball control object and
 functions to decompose transformation matrices.
 
@@ -90,7 +90,7 @@ be specified using a 4 character string or encoded 4-tuple:
   *Axes 4-string*: e.g. 'sxyz' or 'ryxy'
 
   - first character : rotations are applied to 's'tatic or 'r'otating frame
-  - remaining characters : successive rotation axis 'x', 'y', or 'z'
+  - remaining characters : successive arc_rotation axis 'x', 'y', or 'z'
 
   *Axes 4-tuple*: e.g. (0, 0, 0, 0) or (1, 1, 1, 1)
 
@@ -119,11 +119,11 @@ References
      In "Graphics Gems II", pp 324-331. Morgan Kaufmann, 1991.
 (5)  Euler angle conversion. Ken Shoemake.
      In "Graphics Gems IV", pp 222-229. Morgan Kaufmann, 1994.
-(6)  Arcball rotation control. Ken Shoemake.
+(6)  Arcball arc_rotation control. Ken Shoemake.
      In "Graphics Gems IV", pp 175-192. Morgan Kaufmann, 1994.
-(7)  Representing attitude: Euler angles, unit quaternions, and rotation
+(7)  Representing attitude: Euler angles, unit quaternions, and arc_rotation
      vectors. James Diebel. 2006.
-(8)  A discussion of the solution for the best rotation to relate two sets
+(8)  A discussion of the solution for the best arc_rotation to relate two sets
      of vectors. W Kabsch. Acta Cryst. 1978. A34, 827-828.
 (9)  Closed-form solution of absolute orientation using unit quaternions.
      BKP Horn. J Opt Soc Am A. 1987. 4(4):629-642.
@@ -135,7 +135,7 @@ References
      In "Graphics Gems III", pp 124-132. Morgan Kaufmann, 1992.
 (13) Quaternion in molecular modeling. CFF Karney.
      J Mol Graph Mod, 25(5):595-604
-(14) New method for extracting the quaternion from a rotation matrix.
+(14) New method for extracting the quaternion from a arc_rotation matrix.
      Itzhack Y Bar-Itzhack, J Guid Contr Dynam. 2000. 23(6): 1085-1087.
 (15) Multiple View Geometry in Computer Vision. Hartley and Zissermann.
      Cambridge University Press; 2nd Ed. 2004. Chapter 4, Algorithm 4.7, p 130.
@@ -325,7 +325,7 @@ def rotation_matrix(angle, direction, point=None):
     sina = math.sin(angle)
     cosa = math.cos(angle)
     direction = unit_vector(direction[:3])
-    # rotation matrix around unit vector
+    # arc_rotation matrix around unit vector
     R = numpy.diag([cosa, cosa, cosa])
     R += numpy.outer(direction, direction) * (1.0 - cosa)
     direction *= sina
@@ -335,14 +335,14 @@ def rotation_matrix(angle, direction, point=None):
     M = numpy.identity(4)
     M[:3, :3] = R
     if point is not None:
-        # rotation not around origin
+        # arc_rotation not around origin
         point = numpy.array(point[:3], dtype=numpy.float64, copy=False)
         M[:3, 3] = point - numpy.dot(R, point)
     return M
 
 
 def rotation_from_matrix(matrix):
-    """Return rotation angle and axis from rotation matrix.
+    """Return arc_rotation angle and axis from arc_rotation matrix.
 
     >>> angle = (random.random() - 0.5) * (2*math.pi)
     >>> direc = numpy.random.random(3) - 0.5
@@ -369,7 +369,7 @@ def rotation_from_matrix(matrix):
         raise ValueError("no unit eigenvector corresponding to eigenvalue 1")
     point = numpy.real(Q[:, i[-1]]).squeeze()
     point /= point[3]
-    # rotation angle depending on direction
+    # arc_rotation angle depending on direction
     cosa = (numpy.trace(R33) - 1.0) / 2.0
     if abs(direction[2]) > 1e-8:
         sina = (R[1, 0] + (cosa - 1.0) * direction[0] * direction[1]) / direction[2]
@@ -901,7 +901,7 @@ def affine_matrix_from_points(v0, v1, shear=True, scale=True, usesvd=True):
     Otherwise, and if ndims is 3, the quaternion based algorithm by Horn [9]
     is used, which is slower when using this Python implementation.
 
-    The returned matrix performs rotation, translation and uniform scaling
+    The returned matrix performs arc_rotation, translation and uniform scaling
     (if specified).
 
     >>> v0 = [[0, 1031, 1031, 0], [0, 0, 1600, 1600]]
@@ -955,7 +955,7 @@ def affine_matrix_from_points(v0, v1, shear=True, scale=True, usesvd=True):
     elif usesvd or ndims != 3:
         # Rigid transformation via SVD of covariance matrix
         u, s, vh = numpy.linalg.svd(numpy.dot(v1, v0.T))
-        # rotation matrix from SVD orthonormal bases
+        # arc_rotation matrix from SVD orthonormal bases
         R = numpy.dot(u, vh)
         if numpy.linalg.det(R) < 0.0:
             # R does not constitute right handed system
@@ -1045,7 +1045,7 @@ def superimposition_matrix(v0, v1, scale=False, usesvd=True):
 
 
 def euler_matrix(ai, aj, ak, axes='sxyz'):
-    """Return homogeneous rotation matrix from Euler angles and axis sequence.
+    """Return homogeneous arc_rotation matrix from Euler angles and axis sequence.
 
     ai, aj, ak : Euler's roll, pitch and yaw angles
     axes : One of 24 axis sequences as string or encoded tuple
@@ -1108,7 +1108,7 @@ def euler_matrix(ai, aj, ak, axes='sxyz'):
 
 
 def euler_from_matrix(matrix, axes='sxyz'):
-    """Return Euler angles from rotation matrix for specified axis sequence.
+    """Return Euler angles from arc_rotation matrix for specified axis sequence.
 
     axes : One of 24 axis sequences as string or encoded tuple
 
@@ -1234,7 +1234,7 @@ def quaternion_from_euler(ai, aj, ak, axes='sxyz'):
 
 
 def quaternion_about_axis(angle, axis):
-    """Return quaternion for rotation about axis.
+    """Return quaternion for arc_rotation about axis.
 
     >>> q = quaternion_about_axis(0.123, [1, 0, 0])
     >>> numpy.allclose(q, [0.99810947, 0.06146124, 0, 0])
@@ -1250,7 +1250,7 @@ def quaternion_about_axis(angle, axis):
 
 
 def quaternion_matrix(quaternion):
-    """Return homogeneous rotation matrix from quaternion.
+    """Return homogeneous arc_rotation matrix from quaternion.
 
     >>> M = quaternion_matrix([0.99810947, 0.06146124, 0, 0])
     >>> numpy.allclose(M, rotation_matrix(0.123, [1, 0, 0]))
@@ -1277,9 +1277,9 @@ def quaternion_matrix(quaternion):
 
 
 def quaternion_from_matrix(matrix, isprecise=False):
-    """Return quaternion from rotation matrix.
+    """Return quaternion from arc_rotation matrix.
 
-    If isprecise is True, the input matrix is assumed to be a precise rotation
+    If isprecise is True, the input matrix is assumed to be a precise arc_rotation
     matrix and a faster algorithm is used.
 
     >>> q = quaternion_from_matrix(numpy.identity(4), True)
@@ -1454,7 +1454,7 @@ def quaternion_slerp(quat0, quat1, fraction, spin=0, shortestpath=True):
     if abs(abs(d) - 1.0) < _EPS:
         return q0
     if shortestpath and d < 0.0:
-        # invert rotation
+        # invert arc_rotation
         d = -d
         numpy.negative(q1, q1)
     angle = math.acos(d) + spin * math.pi
@@ -1496,7 +1496,7 @@ def random_quaternion(rand=None):
 
 
 def random_rotation_matrix(rand=None):
-    """Return uniform random rotation matrix.
+    """Return uniform random arc_rotation matrix.
 
     rand: array like
         Three independent random variables that are uniformly distributed
@@ -1537,7 +1537,7 @@ class Arcball(object):
     def __init__(self, initial=None):
         """Initialize virtual trackball control.
 
-        initial : quaternion or rotation matrix
+        initial : quaternion or arc_rotation matrix
 
         """
         self._axis = None
@@ -1613,12 +1613,12 @@ class Arcball(object):
             self._qnow = quaternion_multiply(q, self._qdown)
 
     def next(self, acceleration=0.0):
-        """Continue rotation in direction of last drag."""
+        """Continue arc_rotation in direction of last drag."""
         q = quaternion_slerp(self._qpre, self._qnow, 2.0 + acceleration, False)
         self._qpre, self._qnow = self._qnow, q
 
     def matrix(self):
-        """Return homogeneous rotation matrix."""
+        """Return homogeneous arc_rotation matrix."""
         return quaternion_matrix(self._qnow)
 
 

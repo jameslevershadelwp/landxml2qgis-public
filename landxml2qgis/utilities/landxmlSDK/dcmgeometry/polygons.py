@@ -29,6 +29,7 @@ class PolygonGeom:
         self.point_lookup = None
         self.centre_point = None
         self.original_geom = None
+        self.coord_decimals = None
 
         if isinstance(polygon, ParcelType):
             self.stated_area = polygon.area
@@ -52,16 +53,18 @@ class PolygonGeom:
             self.misclose = None
             self.line_order = None
 
-    def set_geometry(self, geometry, points=None, coord_decimals=None):
+    def set_geometry(self, geometry, points=None):
         if self.geometry is None:
             self.original_geom = geometry
         self.geometry = geometry
-        self.set_inner_angles(points, coord_decimals=coord_decimals)
+        self.set_inner_angles(points)
         self.calc_area = self.get_area()
         self.closed = self.set_is_closed()
 
     def create_polygon(self, geometry, points=None, name=None, crs=None, coord_decimals=None):
-        self.set_geometry(geometry, points, coord_decimals=coord_decimals)
+        if coord_decimals is not None:
+            self.coord_decimals = coord_decimals
+        self.set_geometry(geometry, points)
         self.calc_area = self.get_area()
         self.closed = self.set_is_closed()
         self.set_polygon_name(name)
@@ -95,12 +98,18 @@ class PolygonGeom:
         self.calc_area = self.get_area()
 
     def set_coord_lookup(self, points):
-        self.coord_lookup = {tuple(v.geometry.coords)[0]: v.name for v in points.values()}
+        if self.coord_decimals is None:
+            self.coord_lookup = {tuple(v.geometry.coords)[0]: v.name for v in points.values()}
+        else:
+            self.coord_lookup = {}
+            for v in points.values():
+                x = round(v.geometry.x, self.coord_decimals)
+                y = round(v.geometry.y, self.coord_decimals)
+                self.coord_lookup[(x, y)] = v.name
+
         self.point_lookup = {v.name: v.geometry for v in points.values()}
 
-    @staticmethod
-    def set_polygon_points(ring, start=0, points=None, coordinate_decimal_places=None):
-
+    def set_polygon_points(self, ring, start=0, points=None):
         if points is None:
             points = {}
         e = 0
@@ -109,15 +118,15 @@ class PolygonGeom:
             point.point_oid = e + start
             point.name = 'CGPNT-' + str(point.point_oid)
             point.original_point_oid = e + start
-            if coordinate_decimal_places is not None:
-                i = (round(i[0], coordinate_decimal_places), round(i[1], coordinate_decimal_places))
+            if self.coord_decimals is not None:
+                i = (round(i[0], self.coord_decimals), round(i[1], self.coord_decimals))
             point.geometry = sg.Point(i)
             point.original_geom = sg.Point(i)
             points[point.point_oid] = point
 
         return e + start, points
 
-    def generate_polygon_points(self, points=None, coord_decimals=None):
+    def generate_polygon_points(self, points=None):
         # generate point objects for polygon that does not have points
         # TODO this should use the point class will impact some other functions before we change it
         if points is None:
@@ -129,23 +138,25 @@ class PolygonGeom:
                     start, points = self.set_polygon_points(i, start, points)
 
         self.set_coord_lookup(points)
+
         # exterior
         exterior = []
         all_points = []
         for i in self.geometry.exterior.coords[:]:
-            if coord_decimals is not None:
-                i = (round(i[0], coord_decimals), round(i[1], coord_decimals))
+            if self.coord_decimals is not None:
+                i = (round(i[0], self.coord_decimals), round(i[1], self.coord_decimals))
             point_name = self.coord_lookup.get(i)
             if point_name is not None:
                 exterior.append(point_name)
+
         all_points += exterior
         # interiors
         interiors = []
         for ring in self.geometry.interiors[:]:
             interior = []
             for i in ring.coords[:]:
-                if coord_decimals is not None:
-                    i = (round(i[0], coord_decimals), round(i[1], coord_decimals))
+                if self.coord_decimals is not None:
+                    i = (round(i[0], self.coord_decimals), round(i[1], self.coord_decimals))
                 point_name = self.coord_lookup.get(i)
                 if point_name is not None:
                     interior.append(point_name)
@@ -156,9 +167,8 @@ class PolygonGeom:
     def set_values(self, p, i, n, ring):
         self.inner_angles[i] = process_angles(p, i, n, ring, self.point_lookup)
 
-    def set_inner_angles(self, points=None, coord_decimals=None):
-
-        self.generate_polygon_points(points, coord_decimals=coord_decimals)
+    def set_inner_angles(self, points=None):
+        self.generate_polygon_points(points)
         exterior = self.polygon_points.get('exterior')
         interiors = self.polygon_points.get('interiors')
 

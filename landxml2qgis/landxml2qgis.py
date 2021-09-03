@@ -292,16 +292,15 @@ class LandXML2QGIS:
             outpath = Path(self.dlg.lineEdit_3.text(), aws_name)
             outxml = Path(outpath, f'{aws_name}.xml')
             if self.dlg.overwriteCheckBox.isChecked() is True or outxml.exists() is False:
-                QMessageBox.information(None, "Downloading plan",
-                                        'Found plan in the repository, dowloading to:\n'
-                                        f'{str(outxml)}')
                 bucket_name = 'dcm-file-sharing'
                 outpath.mkdir(parents=True, exist_ok=True)
                 url = f'https://{bucket_name}.s3.amazonaws.com/all/{aws_name}.xml'
                 headers = {'Host': f'{bucket_name}.s3.ap-southeast-2.amazonaws.com'}
                 r = requests.get(url, headers=headers)
-
                 if r.ok is True:
+                    QMessageBox.information(None, "Downloading plan",
+                                            'Found plan in the repository, dowloading to:\n'
+                                            f'{str(outxml)}')
                     outpath = Path(self.dlg.lineEdit_3.text(), aws_name)
                     outpath.mkdir(parents=True, exist_ok=True)
                     outxml = Path(outpath, f'{aws_name}.xml')
@@ -313,7 +312,6 @@ class LandXML2QGIS:
                                             'Couldnt find plan in the repository')
             elif outxml.exists() is True:
                 fname = str(outxml)
-
 
         if fname is None:
             fname = self.dlg.lineEdit.text()
@@ -487,7 +485,6 @@ class LandXML2QGIS:
                 if self.dlg.outlierCheckBox.isChecked() is True:
                     if len(dna_outliers) > 0:
                         outliers[geom.survey_number] = qgis_geoms.outliers
-
 
             if len(polygons) > 0 and self.only_dna is False:
                 layer_styles = [v for k, v in styles.items() if 'pol' in k and 'dna' not in k]

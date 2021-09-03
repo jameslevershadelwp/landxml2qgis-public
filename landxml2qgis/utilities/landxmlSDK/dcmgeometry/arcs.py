@@ -219,7 +219,7 @@ class ArcGeom(LineGeom):
                 large = False
         return large
 
-    # assigns a positive or negative value for a rotation direction
+    # assigns a positive or negative value for a arc_rotation direction
     @staticmethod
     def calc_rot_value(rot):
         rot_val = 1

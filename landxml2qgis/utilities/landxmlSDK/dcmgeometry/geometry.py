@@ -75,7 +75,7 @@ class Geometries:
         all_likely = []
         for k, v in loops.items():
             f_loops[k] = Loops(k, v, self.lines)
-            all_likely.extend(v.get('likely',[]))
+            all_likely.extend(v.get('likely', []))
         all_likely = set(all_likely)
         for k, v in self.lines.items():
             if v.name in all_likely:
@@ -85,10 +85,10 @@ class Geometries:
 
     def set_ccc(self):
         d = dict(self.survey_graph.graph.degree())
-        idname = dict()
+        id_name = dict()
         for key, value in d.items():
-            idname.setdefault(value, list()).append(key)
-        ccc = (sorted(idname[max(idname)]))[0]
+            id_name.setdefault(value, list()).append(key)
+        ccc = (sorted(id_name[max(id_name)]))[0]
         self.points.get(ccc).ccc = True
         return ccc
 
@@ -141,7 +141,6 @@ class Geometries:
                 ref_points = sorted(list(self.survey_graph.graph.nodes))
                 ref_point = ref_points[0]
 
-
         short_paths = nx.single_source_shortest_path(self.survey_graph.graph, ref_point)
         ref_point_coords = self.points.get(ref_point).geometry.coords[:]
 
@@ -175,7 +174,6 @@ class Geometries:
         self.update_geometries()
 
     def transform_geometries(self, out_proj):
-
         self.points = transform_geoms(self.points, self.crs, out_proj)
         self.lines = transform_geoms(self.lines, self.crs, out_proj)
         self.polygons = transform_geoms(self.polygons, self.crs, out_proj)
@@ -289,14 +287,14 @@ class Geometries:
                 self.points[k].geometry = sa.translate(v.geometry, x, y)
             self.update_geometries()
 
-    def apply_swing(self, angle=0, origin='centre'):
+    def apply_swing(self, angle=0, origin='center'):
         """origin here should be the point you want to swing the plan around.
         defaulted to the centre of the a point so you wont get any rotation of a point feature if its not set,
         this will generally be the point that you translate the survey onto
         angle is in decimal degrees"""
         if angle != 0:
             for k, v in self.points.items():
-                self.points[k].geometry = sa.rotate(angle, origin)
+                self.points[k].geometry = sa.rotate(v.geometry, angle, origin)
             self.update_geometries()
 
 
@@ -313,9 +311,8 @@ class Geometries:
         self.polygons = PolygonGeomFactory().build(self.landxml, self.lines, self.points, self.crs)
         self.loops = self.set_loop_errors()
 
-    def write_geom_to_file(self, points=True, lines=True, arcs=True, polygons=True, loops=True, location=None,
-                           file_type='GPKG', same_file=True, df_only=False):
-
+    def write_geom_to_file(self, points=True, lines=True, arcs=True, polygons=True, location=None, loops=False,
+                           file_type='GPKG', same_file=True, df_only=False, filename_suffix=''):
 
         def drop_columns(df, columns):
             for column in columns:
@@ -337,10 +334,10 @@ class Geometries:
             out_path = Path(location, self.survey_number)
             out_path.mkdir(exist_ok=True, parents=True)
             if same_file is False or file_type != 'GPKG':
-                out_path = Path(out_path, layer + suffix)
+                out_path = Path(out_path, layer + filename_suffix + suffix)
                 gdf.to_file(str(out_path), driver=file_type)
             else:
-                out_path = Path(out_path, self.survey_number + suffix)
+                out_path = Path(out_path, self.survey_number + filename_suffix + suffix)
                 gdf.to_file(str(out_path), driver=file_type, layer=layer)
 
         extension_lookup = {'GPKG': '.gpkg',
@@ -404,7 +401,7 @@ class Geometries:
         if polygons is True:
             vals = [v.__dict__ for v in self.polygons.values()]
             gdf = make_gdf(vals, ['line_order', 'polygon_points', 'inner_angles', 'coord_lookup',
-                                  'point_lookup', 'original_geom'])
+                                  'point_lookup', 'original_geom', 'misclose'])
 
             self.dataframes['polygons'] = gdf
             if df_only is False:
