@@ -81,6 +81,7 @@ def loop_checker(geom, start_node, mis_tol=None):
     bad_candy = {}
     line_lookups = geom.lines
     connection_loops = nx.cycle_basis(geom.survey_graph.graph, start_node)
+    connection_loops = [i for i in connection_loops if len(i) > 1]
     bad_obs = []
     for point_order in connection_loops:
         reduced_obs = []
@@ -139,7 +140,8 @@ def loop_checker(geom, start_node, mis_tol=None):
             value.append(red_loops)
             angles.append(mis_bearing)
             distances.append(mis_dist)
-            bad_candy[rounded_value] = {'loop': value, 'angles': angles, 'distances': distances}
+            bad_candy[rounded_value] = {'loop': value, 'angles': angles,
+                                        'distances': distances, 'mis_tol': f.misclose_tolerance}
 
         if len(bad_candy) > 0:
             bad_loops = list(set(bad_loops))
@@ -170,3 +172,15 @@ def get_likely_candy(bad_obs, value):
             likely.append(key1)
     value['likely'] = likely
     return value
+
+
+def area_tolerances(area, calc_area):
+    error = 'Pass'
+    difference = abs(area - calc_area)
+
+    percentage = (difference / area) * 100
+    # check if difference is greater than 5%
+    if percentage >= 5:
+        error = 'Warning'
+
+    return error

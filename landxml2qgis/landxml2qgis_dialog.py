@@ -66,7 +66,7 @@ class LandXML2QGISDialog(QtWidgets.QDialog, FORM_CLASS):
 
     def upload_xml(self):
         dialog = QtWidgets.QFileDialog()
-        fname, _ = dialog.getOpenFileName(self, "Import XML", "", "xml data files (*.xml)")
+        fname, _ = dialog.getOpenFileName(self, "Import XML", "", "xml file (*.xml);;adjustment file (*.adj)")
         self.lineEdit.setText(fname)
 
     def set_dna_location(self):

@@ -13,9 +13,10 @@ except ImportError:
         return geometry.buffer(0)
 
 from utilities.landxmlSDK.dcmgeometry.arcs import ArcGeom
+from utilities.landxmlSDK.dcmgeometry.arcs import LineGeom
 from utilities.landxmlSDK.dcmgeometry.polygons import PolygonGeom
 from utilities.landxmlSDK.landxml.landxml import IrregularLine, Curve
-from utilities.landxmlSDK.geometryfunctions.bearingdistancefunctions import calc_distance
+from utilities.landxmlSDK.geometryfunctions.bearingdistancefunctions import calc_distance, calc_bearing
 from utilities.landxmlSDK.geometryfunctions.otherfunctions import chunker
 
 
@@ -25,14 +26,14 @@ class PolygonGeomFactory:
         self.lines = None
         self.points = None
         self.lxml_polygons = {}
-        self.line_order = {}
+        # self.line_order = {}
         self.polygons = {}
 
-    def handle_irregular_lines(self, sp, ep, line):
+    def handle_irregular_lines(self, line):
         # do i need do this here?
         pnt_list = line.PntList2D
         pnt_list_lookup = {(str(v.original_geom.y), str(v.original_geom.x)): k for k, v in self.points.items()}
-        geom = [self.points.get(sp)]
+        geom = [line.setup_point]
         if pnt_list is not None:
             ps = list(chunker(pnt_list.split(), 2))[1:-1]
             for pnt in ps:
@@ -41,7 +42,7 @@ class PolygonGeomFactory:
                 if pnt_list_lookup.get(pn) is None:
                     geom.append(self.points.get(f'IR-{pnt[0]}-{pnt[1]}'))
 
-        geom.append(self.points.get(ep))
+        geom.append(line.target_point)
         geom = [x.geometry.coords[0] for x in geom]
         return geom
 
@@ -54,8 +55,9 @@ class PolygonGeomFactory:
         if len(line_order) > 0:
             se = {}
             for item in line_order:
-                start = item.setup_point
-                end = item.target_point
+                
+                start = item.setup_point.name
+                end = item.target_point.name
                 # start = item.Start.pntRef
                 # end = item.End.pntRef
                 se[(start, end)] = item
@@ -63,8 +65,7 @@ class PolygonGeomFactory:
             for item in se:
                 if (item[1], item[0]) not in se:
                     nd.append(item)
-            groups = {}
-            groups[nd[0][1]] = [nd[0]]
+            groups = {nd[0][1]: [nd[0]]}
             for item in nd[:-1]:
                 nxt = nd[nd.index(item) + 1]
                 listed = groups.get(nxt[0], [])
@@ -83,12 +84,12 @@ class PolygonGeomFactory:
             return {}
 
     def get_poly_geom(self, crs):
-
         for polygon in self.lxml_polygons:
 
             if polygon.parcelType != 'Multipart':
                 if (polygon.class_ == 'Easement' and polygon.parcelFormat == 'Standard') is False:
-                    f_poly = PolygonGeom(polygon, self.lines)
+                    f_poly = PolygonGeom(polygon, self.lines, points=self.points)
+
                     for c in polygon.Center:
                         f_poly.centre_point = c.pntRef
                         break
@@ -102,22 +103,23 @@ class PolygonGeomFactory:
                         f_poly.easement = True
 
                     p_geoms = {}
-
                     f_poly.polygon_points = set()
                     rings = self.handle_inner_rings(f_poly.line_order)
+
                     for k, lo in rings.items():
                         p_geom = []
                         count = 0
                         for line in lo:
                             count += 1
                             #sp = line.Start.pntRef
-                            sp = line.setup_point
+                            start = line.setup_point
+                            sp = start.name
                             f_poly.polygon_points.add(sp)
                             #ep = line.End.pntRef
-                            ep = line.target_point
+                            end = line.target_point
+                            ep = end.name
                             f_poly.polygon_points.add(ep)
-                            start = self.points.get(sp)
-                            end = self.points.get(ep)
+
                             if start.point_type == 'natural boundary' or end.point_type == 'natural boundary' \
                                     and f_poly.contains_nat_bdy is False:
                                 f_poly.contains_nat_bdy = True
@@ -125,41 +127,17 @@ class PolygonGeomFactory:
                                 l_geom = self.lines.get((sp, ep))
                                 if l_geom is None:
                                     l_geom = self.lines.get((ep, sp))
+
                                     if l_geom is not None:
                                         geom = list(reversed(l_geom.geometry.coords[:]))
                                     else:
-                                        start = self.points.get(sp)
-                                        end = self.points.get(ep)
-                                        if isinstance(line, Curve):
-                                            cp = line.Center.pntRef
-                                            radius = line.radius
-                                            rotation = line.rot
-                                            chord = calc_distance(end.geometry, start.geometry)
-                                            # work out big arc or small arc based on original values
-                                            # and the centre point of the arc and rotation
-                                            # build the arc using ArcGeom class
-                                            arc = ArcGeom()
-                                            arc.rot = rotation
-                                            arc.radius = radius
-                                            arc.setup_point = sp
-                                            arc.target_point = ep
-                                            arc.centre_point = cp
-                                            arc.distance = chord
-                                            large = arc.calc_arc_length_size_using_centre(self.points)
-
-                                            # add the calculated arc length here
-                                            arc.arc_length = arc.chord2arc(arc.distance, arc.radius, large)
-                                            arc.geometry = arc.calc_arc_values(self.points)
-                                            geom = arc.geometry.coords[:]
-
-                                        else:
-                                            geom = [start.geometry.coords[:][0], end.geometry.coords[:][0]]
-
+                                        # shouldnt happen
+                                        pass
                                 else:
                                     geom = l_geom.geometry.coords[:]
 
                             else:
-                                geom = self.handle_irregular_lines(sp, ep, line)
+                                geom = self.handle_irregular_lines(line)
 
                             if count == 1:  # polygon == self.lxml_polygons[0]:
                                 p_geom.append(geom[0])
@@ -219,13 +197,18 @@ class PolygonGeomFactory:
         f_poly = PolygonGeom(polygon)
         for child in polygon.Parcels:
             for b in child.Parcel:
+
                 linked_poly = self.polygons.get(b.pclRef)
                 if linked_poly is not None:
+                    linked_poly.parent = f_poly.name
+                    self.polygons[b.pclRef] = linked_poly
+                    f_poly.children[b.pclRef] = linked_poly
                     if isinstance(linked_poly.geometry, sg.MultiPolygon):
                         for poly in linked_poly.geometry.geoms:
                             multi_geom.append(poly)
                     else:
                         multi_geom.append(linked_poly.geometry)
+                    
                 else:
                     rerun.add(polygon)
 

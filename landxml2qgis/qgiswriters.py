@@ -1,5 +1,4 @@
 import collections.abc
-
 from qgis.core import QgsGeometry, QgsField, QgsVectorLayer, QgsFeature, QgsProject, QgsCoordinateReferenceSystem, \
     QgsMapLayerStyleManager, QgsMapLayerStyle
 from PyQt5.QtCore import QVariant
@@ -8,20 +7,24 @@ from utilities.landxmlSDK.dcmgeometry.lines import LineGeom
 from utilities.landxmlSDK.dcmgeometry.arcs import ArcGeom
 from utilities.landxmlSDK.dcmgeometry.polygons import PolygonGeom
 from utilities.landxmlSDK.dcmgeometry.points import PointGeom
+from utilities.landxmlSDK.dcmgeometry.admin import Admin
 from utilities.landxmlSDK.dcmgeometry.loops import Loops, Loop
 from utilities.landxmlSDK.geometryfunctions.misclosefunctions import Misclose
-from utilities.landxmlSDK.dna.dnareaders import DNAAdjustedMeasures
+from utilities.landxmlSDK.dna.dnareaders import DNAAdjustedMeasures, DNAAdjustedCoordinates
 
 class QGISLayer:
     def __init__(self, objects, suffix='Point', layer_type='Point', fields_to_remove=None, location='memory',
-                 styles=None, process=False):
+                 styles=None, process=False, crs=None):
         self.objects = objects
         if fields_to_remove is None:
             fields_to_remove = []
 
         self.layer_name = self.set_layer_name()
         self.type_of_layer = layer_type
-        self.zone = self.set_zone()
+        if crs is None:
+            self.zone = self.set_zone()
+        else:
+            self.zone = str(crs)
         self.vl = self.set_vector_layer(location, suffix)
         self.data = None
         self.field_types = []
@@ -90,7 +93,7 @@ class QGISLayer:
         pr.addAttributes(self.fields)
 
         self.vl.updateFields()
-        row = []
+        features = []
         for p, obs in self.objects.items():
             for obn, ob in obs.items():
                 row = []
@@ -116,7 +119,11 @@ class QGISLayer:
 
                 f.setAttributes(row)
                 f.setGeometry(ob.geometry)
-                pr.addFeature(f)
+                # change this to add features.
+                features.append(f)
+
+        if len(features) > 0:
+            pr.addFeatures(features)
 
     def finalise_layer(self):
         QgsProject.instance().addMapLayer(self.vl)
@@ -150,12 +157,17 @@ class QGISLayer:
 class QGISGeometry:
     def set_attributes(self, ob):
         for k, v in ob.__dict__.items():
-            self.__setattr__(k, v)
+            if isinstance(v, list):
+                value = str(v)
+            else:
+                value = v
             if k == 'geometry':
-                self.geometry = self.set_qgis_geom(v)
+                self.__setattr__(k, self.set_qgis_geom(value))
+            else:
+                self.__setattr__(k, value)
 
     def set_qgis_geom(self, v):
-        if self.geometry is not None:
+        if v is not None:
             geom = QgsGeometry.fromWkt(v.wkt)
         else:
             geom = None
@@ -172,6 +184,16 @@ class QGISLineGeometry(LineGeom, QGISGeometry):
         self.set_attributes(line_object)
         self.distance_feet = self.distance2feet()
         self.distance_links = self.distance2links()
+
+
+class QGISAdjustedCoordsGeometry(DNAAdjustedCoordinates, QGISGeometry):
+    def __init__(self, point_object):
+        self.set_attributes(point_object)
+
+
+class QGISDNAMeasureGeometry(DNAAdjustedMeasures, QGISGeometry):
+    def __init__(self, line_object):
+        self.set_attributes(line_object)
 
 
 class QGISArcGeometry(ArcGeom, LineGeom, QGISGeometry):
@@ -202,6 +224,8 @@ class QGISLoopGeometry:
         self.angles = None
         self.crs = None
         self.group_value = None
+        self.misclose_tolerance = None
+        self.misclose_category = None
 
 
 # this will need to change
@@ -210,21 +234,37 @@ class QGISOutliers(DNAAdjustedMeasures, QGISGeometry):
         self.set_attributes(outlier_object)
         self.crs = crs
 
+
+class QGISAdminGeometry(Admin, QGISGeometry):
+    def __init__(self, admin_object):
+        self.set_attributes(admin_object)
+
+
 class QGISAllObjects:
-    def __init__(self, geom, dna_geom=None, outliers=None):
+    def __init__(self, geom=None, dna_geom=None, outliers=None, dna_measures=None):
         self.crs = None
-        self.arcs, self.lines = self.set_arc_lines(geom.lines)
-        self.points = self.set_points(geom.points)
-        self.polygons = self.set_polygons(geom.polygons)
-        self.loops = self.set_loops(geom.loops)
+
+        self.arcs, self.lines = None, None
+        self.points = None
+        self.polygons = None
+        self.loops = None
+        self.admin = None
         self.dna_arcs = None
         self.dna_lines = None
         self.dna_points = None
         self.dna_polygons = None
         self.dna_loops = None
+        self.outliers = None
+        self.dna_adj_measures = None
+        self.dna_adj_coords = None
 
-        # self.dna_loops = None
-        # self.dna_outliers = None
+        if geom is not None:
+            self.arcs, self.lines = self.set_arc_lines(geom.lines)
+            self.points = self.set_points(geom.points)
+            self.polygons = self.set_polygons(geom.polygons)
+            self.loops = self.set_loops(geom.loops)
+            self.admin = self.set_admin(geom.admin)
+
         if dna_geom is not None:
             self.dna_arcs, self.dna_lines = self.set_arc_lines(dna_geom.lines)
             self.dna_points = self.set_points(dna_geom.points)
@@ -234,6 +274,12 @@ class QGISAllObjects:
             if outliers is not None:
                 # load the outliers here
                 self.outliers = self.set_outliers(outliers)
+
+        if dna_measures is not None:
+            # process a DNAReaderObject here
+            self.dna_adj_measures = self.set_dna_measures(dna_measures.adj_measures)
+            self.dna_adj_measures_points = self.set_dna_measures(dna_measures.adj_measures, lines=False)
+            self.dna_adj_coords = self.set_dna_adj_coords(dna_measures.coordinates)
 
     def set_arc_lines(self, lines):
         arcs = {}
@@ -248,6 +294,9 @@ class QGISAllObjects:
         arcs = self.set_arcs(arcs)
         line = self.set_lines(line)
         return arcs, line
+
+    def set_admin(self, admin):
+        return {'admin': QGISAdminGeometry(admin)}
 
     def set_arcs(self, arcs):
         return {k: QGISArcGeometry(v) for k, v in arcs.items()}
@@ -272,6 +321,8 @@ class QGISAllObjects:
                 loop.loop = str(item.loop)
                 loop.angles = str(v.angles)
                 loop.distances = str(v.distances)
+                loop.misclose_tolerance = v.misclose_tolerance
+                loop.misclose_category = v.misclose_category
                 loop.crs = v.crs
                 loop.group_value = v.group_value
                 qloops[count] = loop
@@ -280,6 +331,19 @@ class QGISAllObjects:
 
     def set_outliers(self, outliers):
         return {k: QGISOutliers(v, crs=self.crs) for k, v in outliers.items()}
+
+    def set_dna_measures(self, measures, lines=True):
+        if lines is True:
+            res = {k: QGISDNAMeasureGeometry(v) for k, v in measures.items() if v.geometry_type == 'Line'}
+        else:
+            res = {k: QGISDNAMeasureGeometry(v) for k, v in measures.items() if v.geometry_type == 'Point'}
+        if len(res) > 0:
+            return res
+        else:
+            return None
+
+    def set_dna_adj_coords(self, adj_coords):
+        return {k: QGISAdjustedCoordsGeometry(v) for k, v in adj_coords.items()}
 
 
 

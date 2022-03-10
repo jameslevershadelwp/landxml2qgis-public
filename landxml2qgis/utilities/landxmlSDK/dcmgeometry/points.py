@@ -19,6 +19,8 @@ class PointGeom:
         self.translated_y = 0
         self.translated_z = 0
         self.ccc = False
+        self.p_constrained = -1
+        self.q_constrained = -1
         if isinstance(point, CgPoint):
             self.name = point.name
             self.point_type = point.pntSurv

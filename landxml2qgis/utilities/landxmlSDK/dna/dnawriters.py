@@ -19,7 +19,8 @@ class AprioriValues:
 
 
 class DNAWriters:
-    def __init__(self, geometries, filename, output_dir=Path(), out_datum=7844, survey_year=None, survey_type='surveyed',
+    def __init__(self, geometries, filename, output_dir=Path(), out_datum=7844, survey_year=None,
+                 survey_type='surveyed',
                  constrained_marks=None, ignored_stns=None, profile_location=None, profile='dcmvr'):
         self.points = geometries.points  # dict of PointGeom items taken from the dcmgeometry class
         self.lines = geometries.lines  # dict of bearings and distances from LineGeom dcmgeometry class
@@ -36,7 +37,8 @@ class DNAWriters:
             self.survey_year = geometries.survey_year
         self.survey_type = survey_type
         self.ignored_obs = self.get_ignored_obs(ignored_stns)
-        self.constrained_marks = self.set_constrained(constrained_marks)
+        self.constrained_marks = None
+        self.set_constrained(constrained_marks)
         self.correlate = self.set_correlate()
         self.profile_location = self.set_profile_location(profile_loc=profile_location)
         self.profile_name = self.set_profile_name(name=profile)
@@ -210,7 +212,7 @@ class DNAWriters:
                 if v.ccc is True:
                     constrained_marks.append(k)
             self.constrained_marks = constrained_marks
-        if isinstance(constrained_marks, list):
+        elif isinstance(constrained_marks, list):
             self.constrained_marks = constrained_marks
         return constrained_marks
 
@@ -262,8 +264,8 @@ class DNAWriters:
         if self.in_datum != self.out_datum:
             self.points = transform_geoms(self.points, self.in_datum, self.out_datum)
 
-        pnts = {pt: v for pt, v in self.points.items() if v.point_type == 'sideshot' and  pt not in self.ignored_obs}
         if self.constrained_marks is None:
+            pnts = {pt: v for pt, v in self.points.items() if v.point_type == 'sideshot' and pt not in self.ignored_obs}
             constrained = [sorted(pnts.keys())[0]]
         else:
             constrained = self.constrained_marks
@@ -346,10 +348,10 @@ class DNAWriters:
 
         all_obs = {}
         for k, v in self.lines.items():
-            all_obs[k] = v
+            all_obs[k[0], k[1]] = v
             x = deepcopy(v)
             x.flip_direction()
-            all_obs[(k[1], k[0])] = x
+            all_obs[k[1], k[0]] = x
         for k, v in all_obs.items():
             if v.line_type not in self.exclude_lines:
                 if v.azimuth_type != 'Ignored':
@@ -372,19 +374,18 @@ class DNAWriters:
         for k, v in obs.items():
             key_value = k
             nv = []
-
             # sort to get clockwise angle order
             for item in v:
                 line1 = self.lines.get((k, item))
-
                 if line1 is None:
-                    line1 =  deepcopy(self.lines.get((item, k)))
+                    line1 = deepcopy(self.lines.get((item, k)))
                     line1.flip_direction()
 
                 b1 = line1.hp_bearing
                 nv.append((item, b1))
             nv = [item[0] for item in sort_by_tuple(nv)]
             row1 = ''
+
             for item in nv:
                 line1 = self.lines.get((k, item))
                 if line1 is None:
@@ -488,6 +489,21 @@ class DNAWriters:
             lines.append(line)
         return lines
 
+    def create_msr_p_q_constraints(self):
+        def create_line_text(c, station, value, std):
+            line = (c.rjust(1) + ''.ljust(1) + str(station)[:20].ljust(20) + ''.ljust(40) +
+                    str(value)[:14].ljust(14) + ''.ljust(14) + str(std)[:9].ljust(9))
+            return line
+        lines = []
+        for k, v in self.points.items():
+            if v.p_constrained >= 0:
+                line = create_line_text('P', v.name, v.latitude, v.p_constrained)
+                lines.append(line)
+            if v.q_constrained >= 0:
+                line = create_line_text('Q', v.name, v.longitude, v.q_constrained)
+                lines.append(line)
+        return lines
+
     @staticmethod
     def create_msr_header(obs, dist_obs):
         """Creates the measurement file header needed for a dynadjust file"""
@@ -519,6 +535,7 @@ class DNAWriters:
         lines = self.create_msr_header(obs, dist_obs)
         lines += self.create_msr_dir_lines(obs)
         lines += self.create_msr_dist_lines(dist_obs)
+        lines += self.create_msr_p_q_constraints()
         line_string = ''
         for line in lines:
             line_string += line + "\n"
@@ -568,3 +585,9 @@ class DNAWriters:
             obj.put(Body=msr_lines)
 
             return self.filename + '.stn', self.filename + '.msr'
+
+    def write_stn_geopackage(self, geopackage_name=None):
+        pass
+
+    def write_msr_geopackage(self, geopackage_name=None):
+        pass

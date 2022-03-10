@@ -1,23 +1,27 @@
+import json
+
 from utilities.landxmlSDK.landxml.landxml import ParcelType, Line, Curve, IrregularLine
 from utilities.landxmlSDK.geometryfunctions.otherfunctions import previous_and_next
-from utilities.landxmlSDK.geometryfunctions.bearingdistancefunctions import process_angles, remove_stroked_curves
+from utilities.landxmlSDK.geometryfunctions.bearingdistancefunctions import process_angles, remove_stroked_curves,\
+    calc_bearing, calc_distance
 from utilities.landxmlSDK.dcmgeometry.points import PointGeom
 from utilities.landxmlSDK.dcmgeometry.lines import LineGeom
 from utilities.landxmlSDK.dcmgeometry.arcs import ArcGeom
 from utilities.landxmlSDK.geometryfunctions.misclosefunctions import Misclose
-
+from utilities.landxmlSDK.landxml.landxml import Curve
 import math
 import shapely.geometry as sg
 from copy import deepcopy
 
 
 class PolygonGeom:
-    def __init__(self, polygon=None, lines=None):
+    def __init__(self, polygon=None, lines=None, points=None):
         self.geometry = None
         self.closed = True
         self.part = False
         self.multipart = False
         self.parent = None
+        self.children = {}
         self.parcel_type = None
         self.valid_geom = None
         self.crs = None
@@ -27,11 +31,15 @@ class PolygonGeom:
         self.inner_angles = {}
         self.coord_lookup = None
         self.point_lookup = None
-        self.centre_point = None
         self.original_geom = None
         self.coord_decimals = None
+        self.polygon_notations = []
+        self.parcel_arcs = {}
+        self.arc_rot_errors = []
+        self.arc_rad_errors = []
 
         if isinstance(polygon, ParcelType):
+            self.line_order = self.set_line_order(polygon, lines, points)
             self.stated_area = polygon.area
             self.parcel_class = polygon.class_
             self.parcel_state = polygon.state
@@ -39,10 +47,16 @@ class PolygonGeom:
             self.calc_area = self.get_area()
             self.name = polygon.name
             self.desc = polygon.desc
-            self.line_order = self.set_line_order(polygon, lines)
             self.misclose = self.get_misclose()
 
+            polygon_centre = polygon.Center
+            if len(polygon_centre) > 0:
+                self.centre_point = polygon_centre[0].pntRef
+            else:
+                self.centre_point = None
+
         else:
+            self.centre_point = None
             self.stated_area = None
             self.parcel_class = None
             self.parcel_state = None
@@ -179,34 +193,43 @@ class PolygonGeom:
             for prev, item, nxt in previous_and_next(interior):
                 self.set_values(prev, item, nxt, interior)
 
-    def get_misclose(self):
+    def get_misclose(self, lines=None, points=None):
         if self.line_order is None:
-            self.set_line_order()
+            self.set_line_order(lines=lines, points=points)
 
         if self.line_order is not None:
-
             misclose = Misclose(self.line_order)
             return misclose
 
-    def set_line_order(self, polygon=None, lines=None):
+    def set_line_order(self, polygon=None, lines=None, points=None):
         lo = []
-
         if polygon is not None:
             if polygon.parcelType != 'Multipart':
-                if (polygon.class_ == 'Easement' and polygon.parcelFormat == 'Standard') is False:
+                if (polygon.class_ == 'Easement' and polygon.parcelFormat == 'Standard') is False and len(
+                        polygon.CoordGeom) > 0:
                     if len(polygon.CoordGeom) > 0:
                         coord_geom = polygon.CoordGeom[0]
                         # lo = sorted([(x.polygon_index, x) for x in coord_geom.Line +
                         #       coord_geom.Curve + coord_geom.IrregularLine])
 
                         lo = []
+
                         for x in coord_geom.Line + coord_geom.Curve + coord_geom.IrregularLine:
                             line = lines.get((x.Start.pntRef, x.End.pntRef))
                             if line is None:
                                 line = deepcopy(lines.get((x.End.pntRef, x.Start.pntRef)))
-                                line.flip_direction()
-
-                            lo.append((x.polygon_index, line))
+                                if line is not None:
+                                    line.flip_direction()
+                                else:
+                                    print((x.End.pntRef, x.Start.pntRef))
+                            if line is not None:
+                                if isinstance(x, Curve):
+                                    self.parcel_arcs[(x.Start.pntRef, x.End.pntRef)] = x
+                                    if x.rot != line.rot:
+                                        self.arc_rot_errors.append((line, polygon))
+                                    if x.radius != line.radius:
+                                        self.arc_rad_errors.append((line,polygon))
+                                lo.append((x.polygon_index, line))
                         lo = [l[1] for l in sorted(lo)]
         else:
             x = self.geometry
@@ -214,3 +237,9 @@ class PolygonGeom:
             pass
 
         return lo
+
+    def add_polygon_notation(self, notation_type, notation):
+        n = {'notation_type': notation_type,
+             'notation': notation}
+        self.polygon_notations.append(n)
+

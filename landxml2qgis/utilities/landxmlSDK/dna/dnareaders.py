@@ -1,4 +1,6 @@
 import shapely.geometry as sg
+from utilities.landxmlSDK.geometryfunctions.conversionsfunctions import hp2dd
+from utilities.landxmlSDK.geometryfunctions.transformationfunctions import transform_coordinates, build_transformer
 
 def try_float(value):
     try:
@@ -32,6 +34,7 @@ class DNAAdjustmentInfo:
         self.filename = None
         self.file_created = None
         self.command_line_arg = None
+        self.stn_corrections = False
         self.stn_file = None
         self.msr_file = None
         self.ref_frame = None
@@ -44,6 +47,7 @@ class DNAAdjustmentInfo:
         self.test_conf_level = None
         self.stn_coord_types = None
         self.stn_printed_in_blocks = None
+        self.tstat = False
 
 
 class DNAIteration:
@@ -109,7 +113,8 @@ class DNAAdjustedMeasures:
         self.msr_id = None
         self.cluster_id = None
         self.geometry = None
-        self.crs = None
+        self.crs = crs
+        self.geometry_type = None
 
         if text_string is not None:
             string1 = text_string[0].ljust(238, ' ')
@@ -140,23 +145,34 @@ class DNAAdjustedMeasures:
                 self.outlier = False
             self.msr_id = string2[216-val:226-val].strip()
             self.cluster_id = string2[226-val:236-val].strip()
+
             self.create_geometry(adjusted_stations)
 
     def create_geometry(self, adjusted_stns=None):
         if adjusted_stns is not None:
             geometry = []
-            for item in [self.stn_1, self.stn_2, self.stn_3]:
-                point = adjusted_stns.get(item)
-                if point is not None:
-                    geometry.append(point.geometry)
+
+            if self.stn_3 is not None:
+                for item in [self.stn_2, self.stn_1, self.stn_3]:
+                    point = adjusted_stns.get(item)
+                    if point is not None:
+                        geometry.append(point.geometry)
+            else:
+                for item in [self.stn_1, self.stn_2]:
+                    point = adjusted_stns.get(item)
+
+                    if point is not None:
+                        geometry.append(point.geometry)
             if len(geometry) > 1:
                 self.geometry = sg.LineString(geometry)
+                self.geometry_type = 'Line'
             elif len(geometry) == 1:
                 self.geometry = sg.Point(geometry[0])
+                self.geometry_type = 'Point'
 
 
 class DNAAdjustedCoordinates:
-    def __init__(self, text_string=None, stn_coord_type='ENzPLHh'):
+    def __init__(self, text_string=None, stn_coord_type='ENzPLHh', stn_corrections=False, crs=None, project=None):
 
         self.stn_name = None
         self.constraint = None
@@ -164,37 +180,105 @@ class DNAAdjustedCoordinates:
         self.n = None
         self.zone = None
         self.crs = None
+        self.lat_dms = None
         self.lat = None
+        self.long_dms = None
         self.long = None
         self.h_ortho = None
         self.h_ellipse = None
+        self.x = None
+        self.y = None
+        self.z = None
         self.sd_e = None
         self.sd_n = None
         self.sd_z = None
+        self.cor_e = None
+        self.cor_n = None
+        self.cor_up = None
         self.description = None
         self.geometry = None
 
-        if stn_coord_type == 'ENzPLHh' and text_string is not None:
+        if stn_coord_type.startswith('ENzPLHh') and text_string is not None:
             text_string = text_string.ljust(300, ' ')
             self.stn_name = text_string[:20].strip()
             self.constraint = text_string[20:25].strip()
             self.e = try_float(text_string[25:40])
             self.n = try_float(text_string[40:55])
             self.zone = try_float(text_string[55:62])
-            self.crs = self.set_crs()
-            self.lat = try_float(text_string[62:76])
-            self.long = try_float(text_string[76:91])
+            if crs is not None:
+                self.crs = crs
+            else:
+                self.set_crs()
+            self.lat_dms = try_float(text_string[62:76])
+            self.lat = hp2dd(self.lat_dms)
+            self.long_dms = try_float(text_string[76:91])
+            self.long = hp2dd(self.long_dms)
             self.h_ortho = try_float(text_string[91:102])
             self.h_ellipse = try_float(text_string[102:113])
-            self.sd_e = try_float(text_string[113:126])
-            self.sd_n = try_float(text_string[126:135])
-            self.sd_z = try_float(text_string[135:145])
-            self.description = empty_string(text_string[145:])
+            if 'XYZ' in stn_coord_type:
+                self.x = try_float(text_string[113:128])
+                self.y = try_float(text_string[128:143])
+                self.z = try_float(text_string[143:158])
+
+                if stn_corrections is False:
+                    self.sd_e = try_float(text_string[158:170])
+                    self.sd_n = try_float(text_string[170:180])
+                    self.sd_z = try_float(text_string[180:190])
+                    self.description = empty_string(text_string[190:])
+                else:
+                    self.sd_e = try_float(text_string[158:166])
+                    self.sd_n = try_float(text_string[166:172])
+                    self.sd_z = try_float(text_string[172:178])
+                    self.cor_e = try_float(text_string[178:191])
+                    self.cor_n = try_float(text_string[191:202])
+                    self.cor_up = try_float(text_string[202:213])
+                    self.description = empty_string(text_string[213:])
+
+            else:
+                if stn_corrections is False:
+                    self.sd_e = try_float(text_string[113:126])
+                    self.sd_n = try_float(text_string[126:135])
+                    self.sd_z = try_float(text_string[135:145])
+                    self.description = empty_string(text_string[145:])
+                else:
+                    self.sd_e = try_float(text_string[113:121])
+                    self.sd_n = try_float(text_string[121:127])
+                    self.sd_z = try_float(text_string[127:133])
+                    self.cor_e = try_float(text_string[133:146])
+                    self.cor_n = try_float(text_string[146:157])
+                    self.cor_up = try_float(text_string[157:168])
+                    self.description = empty_string(text_string[168:])
+
             self.set_geometry()
+
+        elif stn_coord_type.startswith('ENzXYZ') and text_string is not None:
+            text_string = text_string.ljust(300, ' ')
+            self.stn_name = text_string[:20].strip()
+            self.constraint = text_string[20:25].strip()
+            self.e = try_float(text_string[25:40])
+            self.n = try_float(text_string[40:55])
+            self.zone = try_float(text_string[55:62])
+            if project is None:
+                project = self.build_trans()
+            point = sg.Point(self.e, self.n)
+            point = transform_coordinates(point, project=project[0], osr_value=project[1])
+            self.long = point.x
+            self.lat = point.y
+            self.x = try_float(text_string[63:78])
+            self.y = try_float(text_string[78:93])
+            self.z = try_float(text_string[93:108])
+            self.sd_e = try_float(text_string[108:121])
+            self.sd_n = try_float(text_string[121:127])
+            self.sd_z = try_float(text_string[127:133])
+            self.set_geometry()
+
+    def build_trans(self):
+        return build_transformer(in_datum=int(7800 + self.zone), out_datum=7844)
 
     def set_crs(self):
         if self.zone is not None:
             if isinstance(self.zone, (int, float)):
+                # this sets it to MGA2020, probably need to have a clause to handle 94
                 crs = int(self.zone + 7800)
             else:
                 crs = None
@@ -202,7 +286,7 @@ class DNAAdjustedCoordinates:
 
     def set_geometry(self):
         try:
-            self.geometry = sg.Point(self.e, self.n)
+            self.geometry = sg.Point(self.long, self.lat)
         except:
             self.geometry = None
 
@@ -212,11 +296,19 @@ class DNAReaders:
         self.text = self.parse_adj(adj_file)
         self.section_dict = self.get_sections()
         self.adjustment_info = self.get_adjustment_info()
+        self.crs = None
+        if self.adjustment_info.ref_frame == 'GDA2020':
+            self.crs = 7844
+        elif self.adjustment_info.ref_frame == 'GDA94':
+            self.crs = 4283
+
         self.coordinates = self.get_coords()
-        for k, v in self.coordinates.items():
-            crs = v.crs
-            break
-        self.crs = crs
+
+        if self.crs is None:
+            for k, v in self.coordinates.items():
+                self.crs = v.crs
+                break
+
         self.adj_measures = self.get_adj_measures()
         self.global_stats = self.get_global_stats()
         self.iterations = self.get_iterations()
@@ -287,7 +379,11 @@ class DNAReaders:
                 elif key == 'File name':
                     adjustment_info.filename = value
                 elif key == 'Command line arguments':
+                    if '--output-tstat-adj-msr' in value:
+                        adjustment_info.tstat = True
                     adjustment_info.command_line_arg = value
+                    if '--stn-corrections' in value:
+                        adjustment_info.corrections = True
                 elif key == 'Stations file':
                     adjustment_info.stn_file = value
                 elif key == 'Measurements file':
@@ -314,12 +410,16 @@ class DNAReaders:
                     adjustment_info.stn_printed_in_blocks = value
         return adjustment_info
 
-    def get_coords(self):
+    def get_coords(self, crs=None):
         adjusted_coords = {}
         adj_coord_lines = self.section_dict.get('AdjCoords', [])
+        project = None
         if len(adj_coord_lines) > 0:
             for item in adj_coord_lines[2:]:
-                adj_item = DNAAdjustedCoordinates(item, stn_coord_type=self.adjustment_info.stn_coord_types)
+                adj_item = DNAAdjustedCoordinates(item, stn_coord_type=self.adjustment_info.stn_coord_types, crs=crs,
+                                                  project=project)
+                if project is None:
+                    project = adj_item.build_trans()
                 adjusted_coords[adj_item.stn_name] = adj_item
         return adjusted_coords
 
@@ -338,8 +438,9 @@ class DNAReaders:
                 if item[0:2].strip() in ['D', 'A'] and len(item[42:61].strip()) == 0:
                     pass
                 else:
-                    adj_item = DNAAdjustedMeasures(value, crs=self.crs, adjusted_stations=self.coordinates)
-                    adjusted_measures[(adj_item.stn_1, adj_item.stn_2, adj_item.stn_3)] = adj_item
+                    adj_item = DNAAdjustedMeasures(value, crs=self.crs, adjusted_stations=self.coordinates,
+                                                   t_stat=self.adjustment_info.tstat)
+                    adjusted_measures[(adj_item.stn_1, adj_item.stn_2, adj_item.stn_3, adj_item.msr_type)] = adj_item
         return adjusted_measures
 
     def get_global_stats(self):
@@ -355,7 +456,7 @@ class DNAReaders:
             else:
                 value = None
             if value is not None:
-                if key =='SOLUTION':
+                if key == 'SOLUTION':
                     global_stats.solution = value
                 elif key == 'Total time':
                     global_stats.total_time = value
@@ -387,7 +488,7 @@ class DNAReaders:
 
     def get_iterations(self):
         iterations = {}
-        iter_lines = self.section_dict.get('Iteration')
+        iter_lines = self.section_dict.get('Iteration', [])
         for line in iter_lines:
             iter_item = DNAIteration()
             for item in line:

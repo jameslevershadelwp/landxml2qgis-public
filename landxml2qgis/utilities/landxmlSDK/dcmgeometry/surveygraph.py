@@ -13,11 +13,13 @@ class SurveyGraph:
     def generate_graph(self, lines, points):
         g = nx.Graph()
         nodes = set()
+
         for k, v in lines.items():
-            setup, target = k
-            g.add_edge(setup, target, distance=v.distance, bearing=v.dd_bearing, st=(setup, target))
-            nodes.add(setup)
-            nodes.add(target)
+            if v.distance_type not in {'Generated'}:
+                setup, target = k
+                g.add_edge(setup, target, distance=v.distance, bearing=v.dd_bearing, st=(setup, target))
+                nodes.add(setup)
+                nodes.add(target)
 
         # find unconnected points
         unconnected = set()

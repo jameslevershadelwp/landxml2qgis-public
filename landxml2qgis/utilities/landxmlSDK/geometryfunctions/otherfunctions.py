@@ -50,6 +50,13 @@ def remove_duplicates(seq):
     return [x for x in seq if not (x in seen or seen_add(x))]
 
 
+def actually_crosses(A, B, precis=0.05):
+    """A hybrid spatial predicate that determines if two geometries cross on both sides"""
+    return (B.crosses(A) and
+            B.crosses(A.parallel_offset(precis, 'left')) and
+            B.crosses(A.parallel_offset(precis, 'right')))
+
+
 
 
 

@@ -141,15 +141,12 @@
       </widget>
      </item>
      <item>
-      <widget class="QCheckBox" name="linksfeet">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
+      <widget class="QCheckBox" name="adminCheckBox">
        <property name="text">
-        <string>Links and Feet</string>
+        <string>Admin</string>
        </property>
        <property name="checked">
-        <bool>false</bool>
+        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -259,6 +256,16 @@
       </widget>
      </item>
      <item>
+      <widget class="QCheckBox" name="multiDNACheckBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Multi Plan Adjust</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QCheckBox" name="outlierCheckBox">
        <property name="enabled">
         <bool>false</bool>
@@ -336,13 +343,6 @@
      </item>
     </layout>
    </item>
-   <item row="2" column="0">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>LandXML Location</string>
-     </property>
-    </widget>
-   </item>
    <item row="1" column="0" colspan="2">
     <widget class="QLineEdit" name="AWS_LineEdit">
      <property name="enabled">
@@ -356,33 +356,6 @@
       <string>Load options</string>
      </property>
     </widget>
-   </item>
-   <item row="10" column="0" colspan="2">
-    <layout class="QHBoxLayout" name="horizontalLayout_10">
-     <item>
-      <widget class="QCheckBox" name="recalcCheckBox">
-       <property name="text">
-        <string>Recalc Coordinates</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="swingCheckBox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Include approximate swing on recalc</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-    </layout>
    </item>
    <item row="22" column="2">
     <widget class="QLabel" name="label_13">
@@ -407,6 +380,88 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item row="10" column="0" colspan="3">
+    <layout class="QHBoxLayout" name="horizontalLayout_10">
+     <item>
+      <widget class="QCheckBox" name="linksfeet">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Links and Feet</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="recalcCheckBox">
+       <property name="text">
+        <string>Recalc Coordinates</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="swingCheckBox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Include swing on recalc</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_14">
+       <property name="text">
+        <string>Swing Value</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="swingValue">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="acceptDrops">
+        <bool>false</bool>
+       </property>
+       <property name="toolTip">
+        <string extracomment="Approixmate will take the coordinates in the file and swing to the mean swing value between recalculation and file"/>
+       </property>
+       <property name="toolTipDuration">
+        <number>1</number>
+       </property>
+       <property name="text">
+        <string>approximate</string>
+       </property>
+       <property name="maxLength">
+        <number>360</number>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>LandXML Location (does accept an ADJ file,  but no options are used)</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
@@ -553,6 +608,22 @@
     <hint type="destinationlabel">
      <x>428</x>
      <y>308</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>runDNACheckBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>multiDNACheckBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>92</x>
+     <y>346</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>418</x>
+     <y>346</y>
     </hint>
    </hints>
   </connection>

@@ -269,6 +269,3 @@ def remove_stroked_curves(geom):
 
     return fgs
 
-
-
-

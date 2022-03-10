@@ -15,6 +15,7 @@ from utilities.landxmlSDK.dcmgeometry.surveygraph import SurveyGraph
 from utilities.landxmlSDK.dcmgeometry.factories.arclinefactory import ArcLineGeomFactory
 from utilities.landxmlSDK.dcmgeometry.factories.pointfactory import PointGeomFactory
 from utilities.landxmlSDK.dcmgeometry.lines import LineGeom
+from utilities.landxmlSDK.dcmgeometry.admin import Admin
 from utilities.landxmlSDK.dcmgeometry.loops import Loops
 from utilities.landxmlSDK.landxml.landxml import CgPoint, InstrumentSetup, InstrumentPoint, ReducedObservation
 from utilities.landxmlSDK.geometryfunctions.misclosefunctions import loop_checker
@@ -22,22 +23,26 @@ from utilities.landxmlSDK.geometryfunctions.misclosefunctions import loop_checke
 
 class Geometries:
     def __init__(self, landxml, mis_tol=.1):
-        self.landxml = landxml
-        self.add_missing_points_lines()
-        self.points = PointGeomFactory().build(self.landxml)
-        self.crs = self.set_crs()
-        self.original_crs = self.set_original_crs()
-        self.transform_crs = None
-        self.lines = ArcLineGeomFactory().build(self.landxml, self.points, self.get_is_2_point(), self.crs)
-        self.survey_graph = SurveyGraph(self.lines, self.points)
-        self.polygons = PolygonGeomFactory().build(self.landxml, self.lines, self.points, self.crs)
-        self.survey_number = self.get_survey_number()
-        self.survey_year = self.get_survey_year()
-        self.target_points = None
-        self.dataframes = {}
-        self.ccc = self.set_ccc()
-        self.mis_tol = mis_tol
-        self.loops = self.set_loop_errors()
+        self.landxml: landxml = None
+        if landxml:
+            self.landxml: landxml = landxml
+            self.add_missing_points_lines()
+            self.points = PointGeomFactory().build(self.landxml)
+            self.crs = self.set_crs()
+            self.swing_value = 0
+            self.original_crs = self.set_original_crs()
+            self.transform_crs = None
+            self.lines = ArcLineGeomFactory().build(self.landxml, self.points, self.get_is_2_point(), self.crs)
+            self.survey_graph = SurveyGraph(self.lines, self.points)
+            self.polygons = PolygonGeomFactory().build(self.landxml, self.lines, self.points, self.crs)
+            self.survey_number = self.get_survey_number()
+            self.survey_year = self.get_survey_year()
+            self.admin = Admin(self.landxml.Survey[0].SurveyHeader, self.polygons, self.landxml.CoordinateSystem)
+            self.target_points = None
+            self.dataframes = {}
+            self.ccc = self.set_ccc()
+            self.mis_tol = mis_tol
+            self.loops = self.set_loop_errors()
 
     """the following 2 methods link the lines to the points, and the lines to the polygons, vice versa"""
 
@@ -113,23 +118,29 @@ class Geometries:
                         year = 1900
         return year
 
-    def recalc_geometries(self, ref_point=None, swing=False, sf=1, swing_value=None):
-        
-        if swing is True and swing_value is None:
-            swings = []
-            for key, value in self.lines.items():
-                calcd = math.degrees(calc_bearing(self.points.get(key[1]).geometry,
-                                                  self.points.get(key[0]).geometry))
-                dif = calcd - value.dd_bearing
-                if dif < -180:
-                    dif += 360
-                swings.append(dif)
+    def estimate_swing(self):
+        swings = []
+        for key, value in self.lines.items():
+            calcd = math.degrees(calc_bearing(self.points.get(key[1]).geometry,
+                                              self.points.get(key[0]).geometry))
+            dif = calcd - value.dd_bearing
+            if dif < -180:
+                dif += 360
+            swings.append(dif)
 
-            if len(swings) > 0:
-                std = statistics.pstdev(swings)
-                mean = statistics.mean(swings)
-                swings = [x for x in swings if (x > mean - 2 * std) and (x < mean + 2 * std)]
-                swing_value = statistics.mean(swings)
+        if len(swings) > 0:
+            std = statistics.pstdev(swings)
+            mean = statistics.mean(swings)
+            swings = [x for x in swings if (x > mean - 2 * std) and (x < mean + 2 * std)]
+            self.swing_value = statistics.mean(swings)
+        else:
+            self.swing_value = 0
+
+    def recalc_geometries(self, ref_point=None, swing=False, sf=1, swing_value=None):
+        self.swing_value = swing_value
+
+        if swing is True and self.swing_value is None:
+            self.estimate_swing()
 
         if self.points.get(ref_point) is None:
             connected = nx.is_k_edge_connected(self.survey_graph.graph, 1)
@@ -167,11 +178,9 @@ class Geometries:
                         new_geom.add(nxt)
                         self.points[nxt].geometry = sg.Point(ref_e, ref_n)
 
-        if swing is True and swing_value is not None:
-            for k, v in self.points.items():
-                self.points[k].geometry = sa.rotate(v.geometry, angle=-swing_value,
-                                                    origin=self.points.get(ref_point).geometry)
-        self.update_geometries()
+        if swing is True and self.swing_value != 0:
+            self.apply_swing(self.swing_value, origin=self.points.get(ref_point).geometry)
+        self.update_geometries(self.swing_value)
 
     def transform_geometries(self, out_proj):
         self.points = transform_geoms(self.points, self.crs, out_proj)
@@ -294,8 +303,8 @@ class Geometries:
         angle is in decimal degrees"""
         if angle != 0:
             for k, v in self.points.items():
-                self.points[k].geometry = sa.rotate(v.geometry, angle, origin)
-            self.update_geometries()
+                self.points[k].geometry = sa.rotate(v.geometry, -1 * angle, origin)
+            self.update_geometries(swing=angle)
 
 
     def apply_affine_transformation(self, mat=None):
@@ -305,10 +314,11 @@ class Geometries:
             self.update_geometries()
 
 
-    def update_geometries(self):
-        self.lines = ArcLineGeomFactory().build(self.landxml, self.points, self.get_is_2_point(), self.crs)
+    def update_geometries(self, swing=0):
+        self.lines = ArcLineGeomFactory().build(self.landxml, self.points, self.get_is_2_point(), self.crs, swing)
         self.survey_graph = SurveyGraph(self.lines, self.points)
         self.polygons = PolygonGeomFactory().build(self.landxml, self.lines, self.points, self.crs)
+        self.admin.geometry = self.admin.set_geometry(self.polygons)
         self.loops = self.set_loop_errors()
 
     def write_geom_to_file(self, points=True, lines=True, arcs=True, polygons=True, location=None, loops=False,
@@ -399,10 +409,12 @@ class Geometries:
                     write_file(gdf, 'arcs', location, suffix, file_type, same_file)
 
         if polygons is True:
+
             vals = [v.__dict__ for v in self.polygons.values()]
+
             gdf = make_gdf(vals, ['line_order', 'polygon_points', 'inner_angles', 'coord_lookup',
                                   'point_lookup', 'original_geom', 'misclose'])
-
+            gdf['polygon_notations'] = ', '.join(gdf['polygon_notations'])
             self.dataframes['polygons'] = gdf
             if df_only is False:
                 write_file(gdf, 'polygons', location, suffix, file_type, same_file)

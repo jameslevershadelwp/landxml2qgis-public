@@ -101,6 +101,7 @@ class LandXML2QGIS:
         self.menu = self.tr(u'&LandXML2QGIS')
         self.cwd = os.path.split(os.path.abspath(getsourcefile(lambda: 0)))[0]
         self.swing = None
+        self.swing_value = None
         self.download_only = None
         self.recalc = None
         self.dna = None
@@ -222,6 +223,7 @@ class LandXML2QGIS:
             callback=self.run,
             parent=self.iface.mainWindow())
 
+
         # will be set False in run()
         self.first_start = True
 
@@ -253,6 +255,7 @@ class LandXML2QGIS:
     def set_styles(self):
         
         poly_style = Path(self.cwd, 'styles', 'polygon.qml')
+        admin_style = Path(self.cwd, 'styles', 'admin.qml')
         dna_poly_style = Path(self.cwd, 'styles', 'polygon_dna.qml')
         point_style = Path(self.cwd, 'styles', 'point.qml')
         dna_point_style = Path(self.cwd, 'styles', 'point_dna.qml')
@@ -263,12 +266,15 @@ class LandXML2QGIS:
         loop_style = Path(self.cwd, 'styles', 'loop.qml')
         outlier_style = Path(self.cwd, 'styles', 'out.qml')
         dna_out_style = Path(self.cwd, 'styles', 'out_dna.qml')
+        line_adj_style = Path(self.cwd, 'styles', 'line_adj.qml')
+        point_adj_style = Path(self.cwd, 'styles', 'line_adj.qml')
 
         styles = {'vl_poi': point_style, 'vl_lin_m': line_style_m, 'vl_arc': arc_style_m, 'vl_pol': poly_style,
-                  'vl_loop': loop_style, 'vl_lin_lf': line_style_lf, 'vl_arc_lf': arc_style_lf,
+                  'vl_loop': loop_style, 'vl_lin_lf': line_style_lf, 'vl_arc_lf': arc_style_lf, 'vl_admin': admin_style,
                   'vl_pol_dnaadj': dna_poly_style, 'vl_poi_dnaadj': dna_point_style,
                   'vl_lin_dnaadj': line_style_m, 'vl_arc_dnaadj': arc_style_m, 'vl_loop_dnaadj': loop_style,
-                  'vl_out_dnaadj': dna_out_style, 'vl_lin_dnaadj_lf': line_style_lf, 'vl_arc_dnaadj_lf': arc_style_lf}
+                  'vl_out_dnaadj': dna_out_style, 'vl_lin_dnaadj_lf': line_style_lf, 'vl_arc_dnaadj_lf': arc_style_lf,
+                  'vl_lin_adj': line_adj_style, 'vl_poi_adj': point_adj_style}
         for k, v in styles.items():
             if v.exists() is False:
                 styles[k] = None
@@ -276,16 +282,33 @@ class LandXML2QGIS:
 
     def set_box_values(self):
         self.swing = self.dlg.swingCheckBox.isChecked()
+        if self.swing is True:
+            swing_value = self.dlg.swingValue.text()
+            if swing_value == 'approximate':
+                swing_value = None
+            else:
+                try:
+                    swing_value = float(swing_value)
+                except (ValueError, TypeError):
+                    QMessageBox.information(None, "Swing Value",
+                                            'Swing Value needs to be the word "approximate" or a number, '
+                                            'setting to "approximate"')
+                    swing_value = None
+            self.swing_value = swing_value
+
         #self.download_only = self.dlg.downloadOnlyCheckBox.isChecked()
         self.recalc = self.dlg.recalcCheckBox.isChecked()
         self.dna = self.dlg.runDNACheckBox.isChecked()
         self.only_dna = self.dlg.onlyDNACheckBox.isChecked()
+        self.multi_dna = self.dlg.multiDNACheckBox.isChecked()
         self.loops = self.dlg.loopCheckBox.isChecked()
         self.points = self.dlg.pointCheckBox.isChecked()
         self.polygons = self.dlg.polygonCheckBox.isChecked()
         self.lines = self.dlg.lineCheckBox.isChecked()
+        self.constrained_select = None
         
     def get_file_names(self):
+        repo = True
         fname = None
         aws_name = self.dlg.AWS_LineEdit.text()
         if len(aws_name) > 0:
@@ -298,6 +321,7 @@ class LandXML2QGIS:
                 headers = {'Host': f'{bucket_name}.s3.ap-southeast-2.amazonaws.com'}
                 r = requests.get(url, headers=headers)
                 if r.ok is True:
+
                     QMessageBox.information(None, "Downloading plan",
                                             'Found plan in the repository, dowloading to:\n'
                                             f'{str(outxml)}')
@@ -310,6 +334,7 @@ class LandXML2QGIS:
                 else:
                     QMessageBox.information(None, "No plan",
                                             'Couldnt find plan in the repository')
+                    repo = False
             elif outxml.exists() is True:
                 fname = str(outxml)
 
@@ -322,21 +347,21 @@ class LandXML2QGIS:
         folders = self.dlg.lineEdit_4.text()
         if len(folders) > 0:
             fnames = []
-            for directory, fs, filenames in os.path.walk(folders):
-                fnames.extend([str(Path(directory, f)) for f in filenames if f.endswith('.xml')])
+            for directory, fs, filenames in os.walk(str(folders)):
+                fnames.extend([str(Path(directory, f)) for f in filenames if f.endswith(('.xml', '.adj'))])
 
         if len(fnames) > 0:
             self.filenames = fnames
             self.main_plan = os.path.split(fnames[0])[-1][:-4]
-        else:
+        elif repo is True:
             QMessageBox.information(None, "No plan",
                                     'You need to type in a plan')
-            raise
+
 
     def set_outpaths(self):
         self.out_paths = {}
+        out_path_text = Path(self.dlg.lineEdit_3.text())
         for fname in self.filenames:
-            out_path_text = Path(self.dlg.lineEdit_3.text())
             xml_name = os.path.split(fname)[-1][:-4]
             if '_AFR' in xml_name:
                 xml_name, sep, afr = xml_name.partition('_')
@@ -346,6 +371,10 @@ class LandXML2QGIS:
                 out_path = Path(out_path_text, xml_name,
                                      datetime.now().strftime('%Y-%m-%d_%H%M%S'))
             self.out_paths[fname] = out_path
+
+        out_path = Path(out_path_text, 'grouped',
+                    datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+        self.out_paths['grouped'] = out_path
 
     def get_dna_settings(self):
 
@@ -377,17 +406,42 @@ class LandXML2QGIS:
         try:
             if self.dlg.lineEdit_10.text() != 'default':
                 self.mis_tol = float(self.dlg.lineEdit_10.text())
+            else:
+                self.mis_tol = .1
+
         except ValueError as e:
             QMessageBox.information(None, "Misclose Tolerance", "Misclose must be a "
                                                                 f"number\nSetting to {self.mis_tol}")
 
-    def process_dna(self, geom, fn, outpath):
+    def process_stn_msr(self, geom, outpath, constrainted_marks=None):
         self.get_dna_settings()
-        dna_object = DNAWriters(geom, geom.survey_number, output_dir=outpath, profile_location=self.profile_loc)
-        stn_file, msr_file = dna_object.write_stn_msr_file()
+        dna_object = DNAWriters(geom, geom.survey_number, output_dir=outpath, profile_location=self.profile_loc,
+                                constrained_marks=constrainted_marks)
+        return dna_object.write_stn_msr_file()
+
+    def process_multi_dna(self, geoms, outpath):
+        for fn in self.filenames:
+            geom = geoms.get(fn)
+            if self.constrained_select is not None:
+                for k, v in geom.points:
+                    if k not in self.constrained_select and v.ccc is True:
+                        v.ccc = False
+            self.process_stn_msr(geom, outpath)
+
+        stns = sorted([os.path.join(outpath, fn) for fn in os.listdir(outpath) if fn.endswith('.stn')])
+        msrs = sorted([os.path.join(outpath, fn) for fn in os.listdir(outpath) if fn.endswith('.msr')])
         dna_runner = DNARunner(self.dna_dir, multi_thread=self.multi_thread, max_iter=self.max_iter,
-                               iter_thresh=self.it_thresh, output_dir=outpath, filename=geom.survey_number)
-        dna_adj_fp = dna_runner.run_dna_via_subprocesses(msr_location=msr_file, stn_location=stn_file)
+                               iter_thresh=self.it_thresh, output_dir=outpath, filename='grouped')
+        dna_adj_fp = dna_runner.run_dna_via_subprocesses(msr_locations=msrs, stn_locations=stns)
+        return dna_adj_fp
+
+    def process_dna(self, geom, outpath, dna_adj_fp=None):
+        self.get_dna_settings()
+        if dna_adj_fp is None:
+            stn_file, msr_file = self.process_stn_msr(geom, outpath)
+            dna_runner = DNARunner(self.dna_dir, multi_thread=self.multi_thread, max_iter=self.max_iter,
+                                   iter_thresh=self.it_thresh, output_dir=outpath, filename=geom.survey_number)
+            dna_adj_fp = dna_runner.run_dna_via_subprocesses(msr_locations=msr_file, stn_locations=stn_file)
 
         dna_results = DNAReaders(dna_adj_fp)
         dna_coords = dna_results.coordinates
@@ -395,14 +449,28 @@ class LandXML2QGIS:
         result = dna_results.global_stats.chi_squared_test
         dna_geom = deepcopy(geom)
         new_points = {}
+
         for k, v in dna_geom.points.items():
             point = dna_coords.get(k)
             if point is not None:
                 v.set_new_geometry(point.geometry)
+                v.crs = dna_results.crs
                 new_points[k] = v
+        dna_geom.crs = dna_results.crs
         dna_geom.points = new_points
         dna_geom.update_geometries()
         return dna_geom, dna_outliers, result
+
+    def process_geoms(self):
+        geoms = {}
+        for fn in self.filenames:
+            if fn.endswith('.xml'):
+                data = landxml.parse(fn, silence=True, print_warnings=False)
+                geom = Geometries(data, self.mis_tol)
+                if self.recalc is True:
+                    geom.recalc_geometries(ref_point=geom.ccc, swing=self.swing, swing_value=self.swing_value)
+                geoms[fn] = geom
+        return geoms
 
     def run(self):
         """Run method that performs all the real work"""
@@ -425,7 +493,6 @@ class LandXML2QGIS:
             styles = self.set_styles()
             self.set_outpaths()
             self.set_misclose_value()
-
             lines = {}
             arcs = {}
             dna_lines = {}
@@ -433,58 +500,89 @@ class LandXML2QGIS:
             points = {}
             dna_points = {}
             polygons = {}
+            admin = {}
             dna_polygons = {}
             loops = {}
             dna_loops = {}
             outliers = {}
+            dna_adj_coords = {}
+            dna_adj_measures = {}
+            dna_adj_measures_points = {}
             result = ''
-            for fn in self.filenames:
-                data = landxml.parse(fn, silence=True, print_warnings=False)
-                geom = Geometries(data, self.mis_tol)
-                if self.recalc is True:
-                    geom.recalc_geometries(ref_point=geom.ccc, swing=self.swing)
-                outpath = self.out_paths.get(fn)
+
+            geoms = self.process_geoms()
+            if self.multi_dna is True and len(geoms) > 1:
+                outpath = self.out_paths.get('grouped')
                 outpath.mkdir(parents=True, exist_ok=True)
-                dna_geom = None
-                dna_outliers = []
+                fp = self.process_multi_dna(geoms, outpath)
+            else:
+                fp = None
 
-                if self.dna is True:
-                    dna_geom, dna_outliers, result = self.process_dna(geom, fn, outpath)
-                    if self.dlg.lineCheckBox.isChecked() is False:
-                        dna_outliers = []
-                qgis_geoms = QGISAllObjects(geom, dna_geom, dna_outliers)
-                if self.dlg.lineCheckBox.isChecked() is True:
-                    if len(qgis_geoms.lines) > 0:
-                        lines[geom.survey_number] = qgis_geoms.lines
-                    if len(qgis_geoms.arcs) > 0:
-                        arcs[geom.survey_number] = qgis_geoms.arcs
+            for fn in self.filenames:
+                if fn.endswith('.xml'):
+                    geom = geoms.get(fn)
+                    outpath = self.out_paths.get(fn)
+                    outpath.mkdir(parents=True, exist_ok=True)
+                    dna_geom = None
+                    dna_outliers = []
                     if self.dna is True:
-                        if len(qgis_geoms.dna_lines) > 0:
-                            dna_lines[geom.survey_number] = qgis_geoms.dna_lines
-                        if len(qgis_geoms.dna_arcs) > 0:
-                            dna_arcs[geom.survey_number] = qgis_geoms.dna_arcs
-
-                if self.dlg.pointCheckBox.isChecked() is True:
-                    if len(qgis_geoms.points) > 0:
-                        points[geom.survey_number] = qgis_geoms.points
-                    if self.dna is True:
-                        dna_points[geom.survey_number] = qgis_geoms.dna_points
-
-                if self.dlg.polygonCheckBox.isChecked() is True:
-                    if len(qgis_geoms.polygons) > 0:
-                        polygons[geom.survey_number] = qgis_geoms.polygons
-                    if self.dna is True:
-                        dna_polygons[geom.survey_number] = qgis_geoms.dna_polygons
-                
-                if self.dlg.loopCheckBox.isChecked() is True:
-                    if len(qgis_geoms.loops) > 0:
-                        loops[geom.survey_number] = qgis_geoms.loops
+                        dna_geom, dna_outliers, result = self.process_dna(geom, outpath, dna_adj_fp=fp)
+                        if self.dlg.lineCheckBox.isChecked() is False:
+                            dna_outliers = []
+                    qgis_geoms = QGISAllObjects(geom, dna_geom, dna_outliers)
+                    if self.dlg.lineCheckBox.isChecked() is True:
+                        if len(qgis_geoms.lines) > 0:
+                            lines[geom.survey_number] = qgis_geoms.lines
+                        if len(qgis_geoms.arcs) > 0:
+                            arcs[geom.survey_number] = qgis_geoms.arcs
                         if self.dna is True:
-                            dna_loops[geom.survey_number] = qgis_geoms.dna_loops
+                            if len(qgis_geoms.dna_lines) > 0:
+                                dna_lines[geom.survey_number] = qgis_geoms.dna_lines
+                            if len(qgis_geoms.dna_arcs) > 0:
+                                dna_arcs[geom.survey_number] = qgis_geoms.dna_arcs
 
-                if self.dlg.outlierCheckBox.isChecked() is True:
-                    if len(dna_outliers) > 0:
-                        outliers[geom.survey_number] = qgis_geoms.outliers
+                    if self.dlg.pointCheckBox.isChecked() is True:
+                        if len(qgis_geoms.points) > 0:
+                            points[geom.survey_number] = qgis_geoms.points
+                        if self.dna is True:
+                            dna_points[geom.survey_number] = qgis_geoms.dna_points
+
+                    if self.dlg.adminCheckBox.isChecked() is True:
+                        if len(qgis_geoms.admin) > 0:
+                            admin[geom.survey_number] = qgis_geoms.admin
+
+                    if self.dlg.polygonCheckBox.isChecked() is True:
+                        if len(qgis_geoms.polygons) > 0:
+                            polygons[geom.survey_number] = qgis_geoms.polygons
+                        if self.dna is True:
+                            dna_polygons[geom.survey_number] = qgis_geoms.dna_polygons
+
+                    if self.dlg.loopCheckBox.isChecked() is True:
+                        if len(qgis_geoms.loops) > 0:
+                            loops[geom.survey_number] = qgis_geoms.loops
+                            if self.dna is True:
+                                dna_loops[geom.survey_number] = qgis_geoms.dna_loops
+
+                    if self.dlg.outlierCheckBox.isChecked() is True:
+                        if len(dna_outliers) > 0:
+                            outliers[geom.survey_number] = qgis_geoms.outliers
+
+                elif fn.endswith('.adj'):
+                    adj_name = os.path.split(fn)[-1][:-4]
+                    adj_name = adj_name.split('.')[0]
+                    dna_result = DNAReaders(fn)
+                    crs = dna_result.crs
+                    qgis_geoms = QGISAllObjects(outliers=dna_result.get_outliers(), dna_measures=dna_result)
+                    if qgis_geoms.dna_adj_coords is not None:
+                        dna_adj_coords[adj_name] = qgis_geoms.dna_adj_coords
+                    if qgis_geoms.dna_adj_measures is not None:
+                        dna_adj_measures[adj_name] = qgis_geoms.dna_adj_measures
+                    if qgis_geoms.dna_adj_measures_points is not None:
+                        dna_adj_measures_points[adj_name] = qgis_geoms.dna_adj_measures_points
+
+            if len(admin) > 0 and self.only_dna is False:
+                layer_styles = [v for k, v in styles.items() if 'admin' in k and 'dna' not in k]
+                QGISLayer(admin, layer_type='MultiPolygon', styles=layer_styles, process=True, suffix='Admin')
 
             if len(polygons) > 0 and self.only_dna is False:
                 layer_styles = [v for k, v in styles.items() if 'pol' in k and 'dna' not in k]
@@ -530,5 +628,20 @@ class LandXML2QGIS:
                 layer_styles = [v for k, v in styles.items() if 'pol' in k and 'dna' in k]
                 QGISLayer(dna_polygons, layer_type='Polygon', styles=layer_styles, process=True,
                           suffix=f'DNA_Polygons_{result}')
+
+            if len(dna_adj_coords) > 0:
+                layer_styles = [v for k, v in styles.items() if 'poi' in k and 'adj' in k]
+                QGISLayer(dna_adj_coords, layer_type='Point', styles=layer_styles, process=True,
+                          suffix=f'DNA_AdjCoords', crs=crs)
+
+            if len(dna_adj_measures) > 0:
+                layer_styles = [v for k, v in styles.items() if 'lin' in k and 'adj' in k]
+                QGISLayer(dna_adj_measures, layer_type='LineString', styles=layer_styles, process=True,
+                          suffix=f'DNA_AdjMeasures', crs=crs)
+
+            if len(dna_adj_measures_points) > 0:
+                layer_styles = [v for k, v in styles.items() if 'poi' in k and 'adj' in k]
+                QGISLayer(dna_adj_measures_points, layer_type='Point', styles=layer_styles, process=True,
+                          suffix=f'DNA_AdjMeasuresPoints', crs=crs)
 
             self.save_settings()
