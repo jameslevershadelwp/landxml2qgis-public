@@ -5,7 +5,7 @@ import shapely.affinity as sa
 from shapely.prepared import prep
 import os
 from pathlib import Path
-from utilities.landxmlSDK.geometryfunctions.transformationfunctions import transform_geoms
+from utilities.landxmlSDK.geometryfunctions.transformationfunctions import transform_geoms, transform_coordinates
 from utilities.landxmlSDK.geometryfunctions.transformationfunctions import helmert_transformation_with_ids
 from utilities.landxmlSDK.geometryfunctions.bearingdistancefunctions import *
 from utilities.landxmlSDK.geometryfunctions.conversionsfunctions import dd2hp
@@ -22,27 +22,38 @@ from utilities.landxmlSDK.geometryfunctions.misclosefunctions import loop_checke
 
 
 class Geometries:
-    def __init__(self, landxml, mis_tol=.1):
-        self.landxml: landxml = None
-        if landxml:
-            self.landxml: landxml = landxml
+    def __init__(self, landxml=None, mis_tol=.1):
+        self.landxml = landxml
+        self.points = None
+        self.lines = None
+        self.polygons = None
+        self.loops = None
+        self.dataframes = {}
+        self.target_points = None
+        self.crs = None
+        self.swing_value = 0
+        self.transform_crs = None
+        self.target_points = None
+        self.mis_tol = mis_tol
+        self.survey_graph = None
+        self.survey_number = None
+        self.survey_year = None
+        self.admin = None
+        self.ccc = None
+
+        if landxml is not None:
             self.add_missing_points_lines()
             self.points = PointGeomFactory().build(self.landxml)
             self.crs = self.set_crs()
-            self.swing_value = 0
-            self.original_crs = self.set_original_crs()
-            self.transform_crs = None
             self.lines = ArcLineGeomFactory().build(self.landxml, self.points, self.get_is_2_point(), self.crs)
             self.survey_graph = SurveyGraph(self.lines, self.points)
             self.polygons = PolygonGeomFactory().build(self.landxml, self.lines, self.points, self.crs)
             self.survey_number = self.get_survey_number()
             self.survey_year = self.get_survey_year()
             self.admin = Admin(self.landxml.Survey[0].SurveyHeader, self.polygons, self.landxml.CoordinateSystem)
-            self.target_points = None
-            self.dataframes = {}
             self.ccc = self.set_ccc()
-            self.mis_tol = mis_tol
             self.loops = self.set_loop_errors()
+            self.original_crs = self.set_original_crs()
 
     """the following 2 methods link the lines to the points, and the lines to the polygons, vice versa"""
 
@@ -138,9 +149,10 @@ class Geometries:
 
     def recalc_geometries(self, ref_point=None, swing=False, sf=1, swing_value=None):
         self.swing_value = swing_value
-
-        if swing is True and self.swing_value is None:
+        if swing is True and swing_value is None:
             self.estimate_swing()
+        else:
+            self.swing_value = 0
 
         if self.points.get(ref_point) is None:
             connected = nx.is_k_edge_connected(self.survey_graph.graph, 1)
@@ -180,13 +192,22 @@ class Geometries:
 
         if swing is True and self.swing_value != 0:
             self.apply_swing(self.swing_value, origin=self.points.get(ref_point).geometry)
-        self.update_geometries(self.swing_value)
+        else:
+            self.update_geometries(self.swing_value)
 
     def transform_geometries(self, out_proj):
         self.points = transform_geoms(self.points, self.crs, out_proj)
-        self.lines = transform_geoms(self.lines, self.crs, out_proj)
-        self.polygons = transform_geoms(self.polygons, self.crs, out_proj)
+        # self.lines = transform_geoms(self.lines, self.crs, out_proj)
+        # self.polygons = transform_geoms(self.polygons, self.crs, out_proj)
+        # for k, v in self.polygons.items():
+        #     v.set_coord_lookup(self.points)
+        # if len(self.loops) > 0:
+        #     self.loops = transform_geoms(self.loops, self.crs, out_proj)
+        # if self.admin.geometry is not None:
+        #     ag = transform_geoms({'i': self.admin}, self.crs, out_proj)
+        #     self.admin = ag['i']
         self.crs = out_proj
+        self.update_geometries()
 
     def reset_geometries_to_original_crs(self):
         self.transform_geometries(out_proj=self.original_crs)
@@ -414,7 +435,9 @@ class Geometries:
 
             gdf = make_gdf(vals, ['line_order', 'polygon_points', 'inner_angles', 'coord_lookup',
                                   'point_lookup', 'original_geom', 'misclose'])
-            gdf['polygon_notations'] = ', '.join(gdf['polygon_notations'])
+
+            gdf['polygon_notations'] = gdf['polygon_notations'].apply(lambda x: ','.join(map(str, x)))
+
             self.dataframes['polygons'] = gdf
             if df_only is False:
                 write_file(gdf, 'polygons', location, suffix, file_type, same_file)
@@ -447,6 +470,10 @@ class Geometries:
                     for hit in hits:
                         line_hit = rev_lookup[hit.wkb]
                         self.lines[line_hit].overlapping = True
+
+    def gen_graph_from_points_lines(self):
+        if self.points is not None and self.lines is not None:
+            self.survey_graph = SurveyGraph(self.lines, self.points)
 
 
 

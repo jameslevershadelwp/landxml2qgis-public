@@ -104,6 +104,7 @@ def transform_geoms(g, in_proj=None, out_proj=None, mat=None):
     trans = {}
     for k, v in g.items():
         v.geometry = transform_coordinates(v.geometry, in_proj, out_proj, project=project, osr_value=osr_value)
+        v.crs = out_proj
         trans[k] = v
     return trans
 

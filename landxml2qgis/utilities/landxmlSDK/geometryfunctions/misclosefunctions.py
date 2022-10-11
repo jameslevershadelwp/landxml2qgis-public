@@ -57,7 +57,7 @@ class Misclose:
 
     @staticmethod
     def set_polygon_closed(line_order):
-        if len(line_order) > 1 and line_order[0].setup_point == line_order[-1].target_point:
+        if len(line_order) > 1 and line_order[0].setup_point.point_oid == line_order[-1].target_point.point_oid:
             closed = True
         else:
             closed = False
@@ -75,12 +75,15 @@ class Misclose:
             return None
 
 
-def loop_checker(geom, start_node, mis_tol=None):
+def loop_checker(geom, start_node, mis_tol=None, line_types=('Ignored', 'Generated')):
     bad_loops = []
     good_loops = []
     bad_candy = {}
     line_lookups = geom.lines
-    connection_loops = nx.cycle_basis(geom.survey_graph.graph, start_node)
+    G = geom.survey_graph.ignore_line_type(line_types=line_types)
+    if start_node not in G:
+        start_node = [i for i in G.nodes][0]
+    connection_loops = nx.cycle_basis(G, start_node)
     connection_loops = [i for i in connection_loops if len(i) > 1]
     bad_obs = []
     for point_order in connection_loops:

@@ -100,7 +100,8 @@ class LineGeom:
         if self.crs in [7844, 4283]:
             geom = transform_coordinates(geom, in_datum=self.crs, out_datum=7899)
         coords = geom.coords
-        self.calc_geometry_from_start_end(coords)
+        # if self.geometry is None:
+        # self.calc_geometry_from_start_end(coords)
         self.distance = calc_distance(sg.Point(coords[0]), sg.Point(coords[-1]))
         self.dd_bearing = math.degrees(calc_bearing(sg.Point(coords[-1]), sg.Point(coords[0])))
         self.dd_bearing = calc_inside_360(self.dd_bearing)

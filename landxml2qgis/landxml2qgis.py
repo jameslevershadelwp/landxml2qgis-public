@@ -38,6 +38,7 @@ import os
 from inspect import getsourcefile
 import pickle
 import requests
+import time
 
 if '..' not in sys.path:
     sys.path.append("..")
@@ -111,6 +112,7 @@ class LandXML2QGIS:
         self.points = None
         self.polygons = None
         self.lines = None
+        self.out_crs = 7899
         self.filenames = []
         self.out_paths = {}
         self.main_plan = None
@@ -354,9 +356,7 @@ class LandXML2QGIS:
             self.filenames = fnames
             self.main_plan = os.path.split(fnames[0])[-1][:-4]
         elif repo is True:
-            QMessageBox.information(None, "No plan",
-                                    'You need to type in a plan')
-
+            QMessageBox.information(None, "No plan", 'You need to type in a plan')
 
     def set_outpaths(self):
         self.out_paths = {}
@@ -372,8 +372,7 @@ class LandXML2QGIS:
                                      datetime.now().strftime('%Y-%m-%d_%H%M%S'))
             self.out_paths[fname] = out_path
 
-        out_path = Path(out_path_text, 'grouped',
-                    datetime.now().strftime('%Y-%m-%d_%H%M%S'))
+        out_path = Path(out_path_text, 'grouped', datetime.now().strftime('%Y-%m-%d_%H%M%S'))
         self.out_paths['grouped'] = out_path
 
     def get_dna_settings(self):
@@ -520,7 +519,9 @@ class LandXML2QGIS:
 
             for fn in self.filenames:
                 if fn.endswith('.xml'):
-                    geom = geoms.get(fn)
+                    geom = deepcopy(geoms.get(fn))
+                    if geom.crs != self.out_crs:
+                        geom.transform_geometries(self.out_crs)
                     outpath = self.out_paths.get(fn)
                     outpath.mkdir(parents=True, exist_ok=True)
                     dna_geom = None
@@ -579,69 +580,79 @@ class LandXML2QGIS:
                         dna_adj_measures[adj_name] = qgis_geoms.dna_adj_measures
                     if qgis_geoms.dna_adj_measures_points is not None:
                         dna_adj_measures_points[adj_name] = qgis_geoms.dna_adj_measures_points
-
+            p = None
             if len(admin) > 0 and self.only_dna is False:
                 layer_styles = [v for k, v in styles.items() if 'admin' in k and 'dna' not in k]
-                QGISLayer(admin, layer_type='MultiPolygon', styles=layer_styles, process=True, suffix='Admin')
+                QGISLayer(admin, layer_type='MultiPolygon', styles=layer_styles, process=True, suffix='Admin',
+                          crs=self.out_crs)
 
             if len(polygons) > 0 and self.only_dna is False:
                 layer_styles = [v for k, v in styles.items() if 'pol' in k and 'dna' not in k]
                 QGISLayer(polygons, layer_type='Polygon', styles=layer_styles, process=True, suffix='Polygons',
                           fields_to_remove=['line_order', 'original_geom', 'coord_lookup', 'inner_angles',
-                                            'point_lookup', 'calculated_polygon', 'polygon_points'])
+                                            'point_lookup', 'calculated_polygon', 'polygon_points'], crs=self.out_crs)
             if len(loops) > 0 and self.only_dna is False:
                 layer_styles = [v for k, v in styles.items() if 'loop' in k and 'dna' not in k]
-                QGISLayer(loops, layer_type='MultiLineString', styles=layer_styles, process=True, suffix='Loops')
+                QGISLayer(loops, layer_type='MultiLineString', styles=layer_styles, process=True, suffix='Loops',
+                          crs=self.out_crs)
             if len(lines) > 0 and self.only_dna is False:
                 layer_styles = [v for k, v in styles.items() if 'lin' in k and 'dna' not in k]
-                QGISLayer(lines, layer_type='LineString', styles=layer_styles, process=True, suffix='Lines')
+                QGISLayer(lines, layer_type='LineString', styles=layer_styles, process=True, suffix='Lines',
+                          crs=self.out_crs)
             if len(arcs) > 0 and self.only_dna is False:
                 layer_styles = [v for k, v in styles.items() if 'arc' in k and 'dna' not in k]
-                QGISLayer(arcs, layer_type='LineString', styles=layer_styles, process=True, suffix='Arcs')
+                QGISLayer(arcs, layer_type='LineString', styles=layer_styles, process=True, suffix='Arcs',
+                          crs=self.out_crs)
             if len(points) > 0 and self.only_dna is False:
                 layer_styles = [v for k, v in styles.items() if 'poi' in k and 'dna' not in k]
-                QGISLayer(points, layer_type='Point', styles=layer_styles, process=True, suffix='Points')
+                QGISLayer(points, layer_type='Point', styles=layer_styles, process=True, suffix='Points',
+                          crs=self.out_crs)
 
             if len(outliers) > 0:
                 layer_styles = [v for k, v in styles.items() if 'out' in k and 'dna' in k]
                 QGISLayer(outliers, layer_type='LineString', styles=layer_styles, process=True,
-                          suffix=f'DNA_Outliers_{result}')
+                          suffix=f'DNA_Outliers_{result}', crs=self.out_crs)
 
             if len(dna_loops) > 0:
                 layer_styles = [v for k, v in styles.items() if 'loop' in k and 'dna' not in k]
                 QGISLayer(dna_loops, layer_type='MultiLineString', styles=layer_styles, process=True,
-                          suffix='DNA_Loops')
+                          suffix='DNA_Loops', crs=self.out_crs)
 
             if len(dna_lines) > 0:
                 layer_styles = [v for k, v in styles.items() if 'lin' in k and 'dna' in k]
                 QGISLayer(dna_lines, layer_type='LineString', styles=layer_styles, process=True,
-                          suffix=f'DNA_Lines_{result}')
+                          suffix=f'DNA_Lines_{result}', crs=self.out_crs)
             if len(dna_arcs) > 0:
                 layer_styles = [v for k, v in styles.items() if 'arc' in k and 'dna' in k]
                 QGISLayer(dna_arcs, layer_type='LineString', styles=layer_styles, process=True,
-                          suffix=f'DNA_Arcs_{result}')
+                          suffix=f'DNA_Arcs_{result}', crs=self.out_crs)
             if len(dna_points) > 0:
                 layer_styles = [v for k, v in styles.items() if 'poi' in k and 'dna' in k]
                 QGISLayer(dna_points, layer_type='Point', styles=layer_styles, process=True,
-                          suffix=f'DNA_Points_{result}')
+                          suffix=f'DNA_Points_{result}', crs=self.out_crs)
             if len(dna_polygons) > 0:
                 layer_styles = [v for k, v in styles.items() if 'pol' in k and 'dna' in k]
                 QGISLayer(dna_polygons, layer_type='Polygon', styles=layer_styles, process=True,
-                          suffix=f'DNA_Polygons_{result}')
+                          suffix=f'DNA_Polygons_{result}', crs=self.out_crs)
 
             if len(dna_adj_coords) > 0:
                 layer_styles = [v for k, v in styles.items() if 'poi' in k and 'adj' in k]
                 QGISLayer(dna_adj_coords, layer_type='Point', styles=layer_styles, process=True,
-                          suffix=f'DNA_AdjCoords', crs=crs)
+                          suffix=f'DNA_AdjCoords', crs=self.out_crs)
 
             if len(dna_adj_measures) > 0:
                 layer_styles = [v for k, v in styles.items() if 'lin' in k and 'adj' in k]
                 QGISLayer(dna_adj_measures, layer_type='LineString', styles=layer_styles, process=True,
-                          suffix=f'DNA_AdjMeasures', crs=crs)
+                          suffix=f'DNA_AdjMeasures', crs=self.out_crs)
 
             if len(dna_adj_measures_points) > 0:
                 layer_styles = [v for k, v in styles.items() if 'poi' in k and 'adj' in k]
                 QGISLayer(dna_adj_measures_points, layer_type='Point', styles=layer_styles, process=True,
-                          suffix=f'DNA_AdjMeasuresPoints', crs=crs)
+                          suffix=f'DNA_AdjMeasuresPoints', crs=self.out_crs)
 
+            # self.iface.mapCanvas().refresh()
+            # if p is not None:
+            #     ext = p.vl.extent()
+            #     self.iface.mapCanvas().setExtent(ext)
+            #     self.iface.mapCanvas().refresh()
             self.save_settings()

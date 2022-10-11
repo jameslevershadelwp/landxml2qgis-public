@@ -187,7 +187,21 @@ class PolygonGeomFactory:
 
                         # fix invalid geometry
                         if f_poly.geometry.is_valid is False and (outer[0] == outer[-1]) and len(outer) > 1:
-                            f_poly.geometry = make_valid(f_poly.geometry)
+                            v_geom = make_valid(f_poly.geometry)
+                            if isinstance(v_geom, (sg.Polygon, sg.MultiPolygon)):
+                                f_poly.geometry = v_geom
+                            if isinstance(v_geom, sg.GeometryCollection):
+                                p = []
+                                for g in v_geom.geoms:
+                                    if isinstance(g, sg.Polygon):
+                                        p.append(g)
+                                    elif isinstance(g, sg.MultiPolygon):
+                                        for mg in g.geoms:
+                                            p.append(mg)
+                                if len(p) == 1:
+                                    f_poly.geometry = sg.Polygon(p[0])
+                                elif len(p) > 1:
+                                    f_poly.geometry = sg.MultiPolygon(p)
 
                         self.polygons[f_poly.name] = f_poly
 

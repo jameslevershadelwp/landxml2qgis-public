@@ -127,6 +127,7 @@ class QGISLayer:
 
     def finalise_layer(self):
         QgsProject.instance().addMapLayer(self.vl)
+
         self.vl.updateExtents()
         self.set_styles()
 

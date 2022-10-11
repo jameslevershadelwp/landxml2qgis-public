@@ -8,7 +8,10 @@ from utilities.landxmlSDK.geometryfunctions.bearingdistancefunctions import calc
 
 class SurveyGraph:
     def __init__(self, lines, points):
+
+        self.connected = None
         self.graph = self.generate_graph(lines, points)
+
 
     def generate_graph(self, lines, points):
         g = nx.Graph()
@@ -17,7 +20,8 @@ class SurveyGraph:
         for k, v in lines.items():
             if v.distance_type not in {'Generated'}:
                 setup, target = k
-                g.add_edge(setup, target, distance=v.distance, bearing=v.dd_bearing, st=(setup, target))
+                g.add_edge(setup, target, distance=v.distance, bearing=v.dd_bearing, st=(setup, target),
+                           distance_type=v.distance_type, az_type=v.azimuth_type)
                 nodes.add(setup)
                 nodes.add(target)
 
@@ -28,8 +32,8 @@ class SurveyGraph:
             if point not in nodes:
                 unconnected.add(point)
 
-        connected = nx.is_k_edge_connected(g, 1)
-        if connected is False:
+        self.connected = nx.is_k_edge_connected(g, 1)
+        if self.connected is False:
             # get largest branch
             branches = list(nx.k_edge_components(g, 1))
             max_b = max(branches, key=len)
@@ -60,6 +64,11 @@ class SurveyGraph:
                 distance = calc_distance(setup, target)
                 azimuth = calc_bearing(target, setup)
                 azimuth = calc_inside_360(math.degrees(azimuth))
-                g.add_edge(ref, point, distance=distance, bearing=azimuth, st=(ref, point))
+                g.add_edge(ref, point, distance=distance, bearing=azimuth, st=(ref, point), distance_type='Generated',
+                           az_type='Generated')
 
         return g
+
+    def ignore_line_type(self, line_types=('Ignored', 'Generated')):
+        return nx.Graph(((u, v, e) for u, v, e in self.graph.edges(data=True) if
+                        (e['distance_type'] not in line_types and e['az_type'] not in line_types)))
