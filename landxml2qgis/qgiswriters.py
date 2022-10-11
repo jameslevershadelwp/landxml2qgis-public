@@ -3,14 +3,14 @@ from qgis.core import QgsGeometry, QgsField, QgsVectorLayer, QgsFeature, QgsProj
     QgsMapLayerStyleManager, QgsMapLayerStyle
 from PyQt5.QtCore import QVariant
 from qgis.PyQt.QtWidgets import QMessageBox
-from utilities.landxmlSDK.dcmgeometry.lines import LineGeom
-from utilities.landxmlSDK.dcmgeometry.arcs import ArcGeom
-from utilities.landxmlSDK.dcmgeometry.polygons import PolygonGeom
-from utilities.landxmlSDK.dcmgeometry.points import PointGeom
-from utilities.landxmlSDK.dcmgeometry.admin import Admin
-from utilities.landxmlSDK.dcmgeometry.loops import Loops, Loop
-from utilities.landxmlSDK.geometryfunctions.misclosefunctions import Misclose
-from utilities.landxmlSDK.dna.dnareaders import DNAAdjustedMeasures, DNAAdjustedCoordinates
+from utilities.dcmgeometrysdk.dcmgeometry.lines import LineGeom
+from utilities.dcmgeometrysdk.dcmgeometry.arcs import ArcGeom
+from utilities.dcmgeometrysdk.dcmgeometry.polygons import PolygonGeom
+from utilities.dcmgeometrysdk.dcmgeometry.points import PointGeom
+from utilities.dcmgeometrysdk.dcmgeometry.admin import Admin
+from utilities.dcmgeometrysdk.dcmgeometry.loops import Loops, Loop
+from utilities.dcmgeometrysdk.geometryfunctions.misclosefunctions import Misclose
+from utilities.dcmgeometrysdk.dna.dnareaders import DNAAdjustedMeasures, DNAAdjustedCoordinates
 
 class QGISLayer:
     def __init__(self, objects, suffix='Point', layer_type='Point', fields_to_remove=None, location='memory',
@@ -127,6 +127,7 @@ class QGISLayer:
 
     def finalise_layer(self):
         QgsProject.instance().addMapLayer(self.vl)
+
         self.vl.updateExtents()
         self.set_styles()
 

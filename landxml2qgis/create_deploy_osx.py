@@ -1,16 +1,18 @@
 from zipfile import ZipFile, ZIP_DEFLATED
 import os
-
 import distutils.dir_util
+import shutil
 
 
-src = '/Users/jamesleversha/OneDrive/James/PycharmProjects/DigitalCadastre/App/landxml2qgis'
-distutils.dir_util.copy_tree(src, '/Users/jamesleversha/PycharmProjects/landxml2qgis-public/landxml2qgis',
-                             update=1, verbose=1,)
+src = '/Users/jamesleversha/PycharmProjects/DigitalCadastre/App/landxml2qgis'
+dst = '/Users/jamesleversha/PycharmProjects/landxml2qgis-public/landxml2qgis'
+if os.path.exists(dst):
+    shutil.rmtree(dst)
+distutils.dir_util.copy_tree(src, dst, update=1, verbose=1,)
 
-src = '/Users/jamesleversha/PycharmProjects/DigitalCadastre/utilities/landxmlSDK'
-distutils.dir_util.copy_tree(src, '/Users/jamesleversha/PycharmProjects/landxml2qgis-public/landxml2qgis/utilities/landxmlSDK',
-                             update=1, verbose=1,)
+src = '/Users/jamesleversha/PycharmProjects/DigitalCadastre/utilities/dcmgeometrysdk'
+dst = '/Users/jamesleversha/PycharmProjects/landxml2qgis-public/landxml2qgis/utilities/dcmgeometrysdk'
+distutils.dir_util.copy_tree(src, dst, update=1, verbose=1,)
 
 
 os.chdir('/Users/jamesleversha/PycharmProjects/landxml2qgis-public')
