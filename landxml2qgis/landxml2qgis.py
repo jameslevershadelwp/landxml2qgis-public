@@ -251,6 +251,7 @@ class LandXML2QGIS:
         self.dlg.my_settings.setValue('iter_thresh', self.dlg.lineEdit_9.text())
         self.dlg.my_settings.setValue("recalc", self.dlg.recalcCheckBox.isChecked())
         self.dlg.my_settings.setValue("multi-thread", self.dlg.multiThreadCheckBox.isChecked())
+        self.dlg.my_settings.setValue("docker", self.dlg.dockerCheckBox.isChecked())
 
         # style files
 
@@ -400,6 +401,13 @@ class LandXML2QGIS:
 
         self.multi_thread = self.dlg.multiThreadCheckBox.isChecked()
         self.dna_dir = self.dlg.lineEdit_2.text()
+        self.docker = self.dlg.dockerCheckBox.isChecked()
+        if self.docker is True:
+            self.mount_dir = self.dlg.mount_directory_le.text()
+            self.container = self.dlg.container_le.text()
+        else:
+            self.mount_dir = None
+            self.container = None
 
     def set_misclose_value(self):
         try:
@@ -414,7 +422,8 @@ class LandXML2QGIS:
 
     def process_stn_msr(self, geom, outpath, constrainted_marks=None):
         self.get_dna_settings()
-        dna_object = DNAWriters(geom, geom.survey_number, output_dir=outpath, profile_location=self.profile_loc,
+        dna_object = DNAWriters(geom,
+                                output_dir=outpath, profile_location=self.profile_loc,
                                 constrained_marks=constrainted_marks)
         return dna_object.write_stn_msr_file()
 
@@ -430,7 +439,9 @@ class LandXML2QGIS:
         stns = sorted([os.path.join(outpath, fn) for fn in os.listdir(outpath) if fn.endswith('.stn')])
         msrs = sorted([os.path.join(outpath, fn) for fn in os.listdir(outpath) if fn.endswith('.msr')])
         dna_runner = DNARunner(self.dna_dir, multi_thread=self.multi_thread, max_iter=self.max_iter,
-                               iter_thresh=self.it_thresh, output_dir=outpath, filename='grouped')
+                               iter_thresh=self.it_thresh, output_dir=outpath, filename='grouped',
+                               mount_dir=self.mount_dir, docker=self.docker, container_name=self.container,
+                               host_directory=self.dlg.lineEdit_3.text())
         dna_adj_fp = dna_runner.run_dna_via_subprocesses(msr_locations=msrs, stn_locations=stns)
         return dna_adj_fp
 
@@ -439,7 +450,9 @@ class LandXML2QGIS:
         if dna_adj_fp is None:
             stn_file, msr_file = self.process_stn_msr(geom, outpath)
             dna_runner = DNARunner(self.dna_dir, multi_thread=self.multi_thread, max_iter=self.max_iter,
-                                   iter_thresh=self.it_thresh, output_dir=outpath, filename=geom.survey_number)
+                                   iter_thresh=self.it_thresh, output_dir=outpath, filename=geom.survey_number,
+                                   mount_dir=self.mount_dir, docker=self.docker, container_name=self.container,
+                                   host_directory=self.dlg.lineEdit_3.text())
             dna_adj_fp = dna_runner.run_dna_via_subprocesses(msr_locations=msr_file, stn_locations=stn_file)
 
         dna_results = DNAReaders(dna_adj_fp)
@@ -528,6 +541,8 @@ class LandXML2QGIS:
                     dna_outliers = []
                     if self.dna is True:
                         dna_geom, dna_outliers, result = self.process_dna(geom, outpath, dna_adj_fp=fp)
+                        if dna_geom.crs != self.out_crs:
+                            dna_geom.transform_geometries(self.out_crs)
                         if self.dlg.lineCheckBox.isChecked() is False:
                             dna_outliers = []
                     qgis_geoms = QGISAllObjects(geom, dna_geom, dna_outliers)
