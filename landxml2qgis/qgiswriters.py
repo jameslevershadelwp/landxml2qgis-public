@@ -157,6 +157,9 @@ class QGISLayer:
 
 class QGISGeometry:
     def set_attributes(self, ob):
+        if isinstance(ob, PolygonGeom):
+            if len(ob.children) > 0:
+                ob.set_geometry_from_children()
         for k, v in ob.__dict__.items():
             if isinstance(v, list):
                 value = str(v)

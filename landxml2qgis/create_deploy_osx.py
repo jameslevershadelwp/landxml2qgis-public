@@ -18,7 +18,7 @@ distutils.dir_util.copy_tree(src, dst, update=1, verbose=1,)
 os.chdir('/Users/jamesleversha/PycharmProjects/landxml2qgis-public')
 filepath = '/Users/jamesleversha/PycharmProjects/landxml2qgis-public/deploy/landxml2qgis.zip'
 filepaths_to_zip = ['landxml2qgis']
-
+files = []
 for pathname in filepaths_to_zip:
     files = [i for i in os.walk(pathname)]
 

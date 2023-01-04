@@ -119,7 +119,9 @@ class LandXML2QGIS:
         self.max_iter = 100
         self.it_thresh = .0005
         self.multi_thread = False
+        self.apu = False
         self.mis_tol = .1
+        self.starting_point = None
         this_dir = os.path.dirname(os.path.realpath(__file__))
         self.profile_loc = os.path.join(this_dir, 'utilities/dcmgeometrysdk/resources/aprioris.json')
         # Check if plugin was started the first time in current QGIS session
@@ -243,6 +245,13 @@ class LandXML2QGIS:
     def run_dna(self, xid, ref, geom):
         pass
 
+    def set_starting_point(self):
+        sp = self.dlg.startingPointEdit.text()
+        try:
+            return int(sp)
+        except Exception:
+            return None
+
     def save_settings(self):
         self.dlg.my_settings.setValue('dna_dir', self.dlg.lineEdit_2.text())
         #self.dlg.my_settings.setValue('credentials_dir', self.dlg.lineEdit_5.text())
@@ -309,6 +318,23 @@ class LandXML2QGIS:
         self.polygons = self.dlg.polygonCheckBox.isChecked()
         self.lines = self.dlg.lineCheckBox.isChecked()
         self.constrained_select = None
+        self.starting_point = self.set_starting_point()
+        self.set_out_zone()
+
+    def set_out_zone(self):
+        out_text = str(self.dlg.zoneComboBox.currentText())
+        if out_text == '55 - MGA2020':
+            self.out_crs = 7855
+        elif out_text == '54 - MGA2020':
+            self.out_crs = 7854
+        elif out_text == '56 - MGA2020':
+            self.out_crs = 7856
+        elif out_text == '53 - MGA2020':
+            self.out_crs = 7853
+        elif out_text == 'VicGrid - MGA2020':
+            self.out_crs = 7899
+        elif out_text == 'GDA2020':
+            self.out_crs = 7844
         
     def get_file_names(self):
         repo = True
@@ -319,12 +345,12 @@ class LandXML2QGIS:
             outxml = Path(outpath, f'{aws_name}.xml')
             if self.dlg.overwriteCheckBox.isChecked() is True or outxml.exists() is False:
                 bucket_name = 'dcm-file-sharing'
-                outpath.mkdir(parents=True, exist_ok=True)
+
                 url = f'https://{bucket_name}.s3.amazonaws.com/all/{aws_name}.xml'
                 headers = {'Host': f'{bucket_name}.s3.ap-southeast-2.amazonaws.com'}
                 r = requests.get(url, headers=headers)
                 if r.ok is True:
-
+                    outpath.mkdir(parents=True, exist_ok=True)
                     QMessageBox.information(None, "Downloading plan",
                                             'Found plan in the repository, dowloading to:\n'
                                             f'{str(outxml)}')
@@ -400,6 +426,7 @@ class LandXML2QGIS:
                                     f'Iteration threshold needs to be a number setting to {self.it_thresh}')
 
         self.multi_thread = self.dlg.multiThreadCheckBox.isChecked()
+        self.apu = self.dlg.apuCheckBox.isChecked()
         self.dna_dir = self.dlg.lineEdit_2.text()
         self.docker = self.dlg.dockerCheckBox.isChecked()
         if self.docker is True:
@@ -441,7 +468,7 @@ class LandXML2QGIS:
         dna_runner = DNARunner(self.dna_dir, multi_thread=self.multi_thread, max_iter=self.max_iter,
                                iter_thresh=self.it_thresh, output_dir=outpath, filename='grouped',
                                mount_dir=self.mount_dir, docker=self.docker, container_name=self.container,
-                               host_directory=self.dlg.lineEdit_3.text())
+                               host_directory=self.dlg.lineEdit_3.text(), apu=self.apu)
         dna_adj_fp = dna_runner.run_dna_via_subprocesses(msr_locations=msrs, stn_locations=stns)
         return dna_adj_fp
 
@@ -449,13 +476,14 @@ class LandXML2QGIS:
         self.get_dna_settings()
         if dna_adj_fp is None:
             stn_file, msr_file = self.process_stn_msr(geom, outpath)
+
             dna_runner = DNARunner(self.dna_dir, multi_thread=self.multi_thread, max_iter=self.max_iter,
                                    iter_thresh=self.it_thresh, output_dir=outpath, filename=geom.survey_number,
                                    mount_dir=self.mount_dir, docker=self.docker, container_name=self.container,
-                                   host_directory=self.dlg.lineEdit_3.text())
+                                   host_directory=self.dlg.lineEdit_3.text(), apu=self.apu)
             dna_adj_fp = dna_runner.run_dna_via_subprocesses(msr_locations=msr_file, stn_locations=stn_file)
 
-        dna_results = DNAReaders(dna_adj_fp)
+        dna_results = DNAReaders(dna_adj_fp, stn_corrections=True)
         dna_coords = dna_results.coordinates
         dna_outliers = dna_results.get_outliers()
         result = dna_results.global_stats.chi_squared_test
@@ -480,7 +508,16 @@ class LandXML2QGIS:
                 data = landxml.parse(fn, silence=True, print_warnings=False)
                 geom = Geometries(data, self.mis_tol)
                 if self.recalc is True:
-                    geom.recalc_geometries(ref_point=geom.ccc, swing=self.swing, swing_value=self.swing_value)
+                    point_oids = {v.point_oid: k for k,v in geom.points.items()}
+                    if self.starting_point in geom.points.keys():
+                        sp = self.starting_point
+                    elif str(self.starting_point) in geom.points.keys():
+                        sp = str(self.starting_point)
+                    elif self.starting_point in point_oids and self.starting_point is not None:
+                        sp = point_oids.get(self.starting_point)
+                    else:
+                        sp = geom.ccc
+                    geom.recalc_geometries(ref_point=sp, swing=self.swing, swing_value=self.swing_value)
                 geoms[fn] = geom
         return geoms
 
@@ -588,6 +625,7 @@ class LandXML2QGIS:
                     adj_name = adj_name.split('.')[0]
                     dna_result = DNAReaders(fn)
                     crs = dna_result.crs
+                    self.out_crs = crs
                     qgis_geoms = QGISAllObjects(outliers=dna_result.get_outliers(), dna_measures=dna_result)
                     if qgis_geoms.dna_adj_coords is not None:
                         dna_adj_coords[adj_name] = qgis_geoms.dna_adj_coords
