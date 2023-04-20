@@ -569,6 +569,7 @@ class LandXML2QGIS:
 
             for fn in self.filenames:
                 if fn.endswith('.xml'):
+
                     geom = deepcopy(geoms.get(fn))
                     if geom.crs != self.out_crs:
                         geom.transform_geometries(self.out_crs)
@@ -633,6 +634,7 @@ class LandXML2QGIS:
                         dna_adj_measures[adj_name] = qgis_geoms.dna_adj_measures
                     if qgis_geoms.dna_adj_measures_points is not None:
                         dna_adj_measures_points[adj_name] = qgis_geoms.dna_adj_measures_points
+
             p = None
             if len(admin) > 0 and self.only_dna is False:
                 layer_styles = [v for k, v in styles.items() if 'admin' in k and 'dna' not in k]
@@ -659,7 +661,7 @@ class LandXML2QGIS:
             if len(points) > 0 and self.only_dna is False:
                 layer_styles = [v for k, v in styles.items() if 'poi' in k and 'dna' not in k]
                 QGISLayer(points, layer_type='Point', styles=layer_styles, process=True, suffix='Points',
-                          crs=self.out_crs)
+                          crs=self.out_crs, fields_to_remove=['vertical_position', 'horizontal_position'])
 
             if len(outliers) > 0:
                 layer_styles = [v for k, v in styles.items() if 'out' in k and 'dna' in k]
@@ -701,7 +703,8 @@ class LandXML2QGIS:
             if len(dna_adj_measures_points) > 0:
                 layer_styles = [v for k, v in styles.items() if 'poi' in k and 'adj' in k]
                 QGISLayer(dna_adj_measures_points, layer_type='Point', styles=layer_styles, process=True,
-                          suffix=f'DNA_AdjMeasuresPoints', crs=self.out_crs)
+                          suffix=f'DNA_AdjMeasuresPoints', crs=self.out_crs,
+                          fields_to_remove=['vertical_position', 'horizontal_position'])
 
             # self.iface.mapCanvas().refresh()
             # if p is not None:

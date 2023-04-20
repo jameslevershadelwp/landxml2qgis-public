@@ -20,7 +20,7 @@ filepath = '/Users/jamesleversha/PycharmProjects/landxml2qgis-public/deploy/land
 filepaths_to_zip = ['landxml2qgis']
 files = []
 for pathname in filepaths_to_zip:
-    files = [i for i in os.walk(pathname)]
+    files += [i for i in os.walk(pathname)]
 
 
 with ZipFile(filepath, 'w', compression=ZIP_DEFLATED) as open_zip:

@@ -1,4 +1,6 @@
 import collections.abc
+import typing
+
 from qgis.core import QgsGeometry, QgsField, QgsVectorLayer, QgsFeature, QgsProject, QgsCoordinateReferenceSystem, \
     QgsMapLayerStyleManager, QgsMapLayerStyle
 from PyQt5.QtCore import QVariant
@@ -70,6 +72,7 @@ class QGISLayer:
             layer_name = list(self.objects.keys())[0]
         else:
             layer_name = 'ALL'
+
         return layer_name
 
     def set_zone(self):
@@ -94,8 +97,10 @@ class QGISLayer:
 
         self.vl.updateFields()
         features = []
+        count = 0
         for p, obs in self.objects.items():
             for obn, ob in obs.items():
+
                 row = []
                 f = QgsFeature(pr.fields())
                 row.append(str(p))
@@ -118,15 +123,33 @@ class QGISLayer:
                     row.append(i)
 
                 f.setAttributes(row)
-                f.setGeometry(ob.geometry)
-                # change this to add features.
-                features.append(f)
+                try:
+                    f.setGeometry(ob.geometry)
+                    # change this to add features.
+                    features.append(f)
+                except TypeError as err:
+                    try:
+                        geom = QgsGeometry.fromWkt(ob.geometry.wkt)
+                        f.setGeometry(geom)
+                        features.append(f)
+                    except TypeError as err:
+                        if count < 1:
+                            QMessageBox.information(None, 'Geometry Error', str(ob.geometry))
+                            count += 1
 
         if len(features) > 0:
             pr.addFeatures(features)
 
     def finalise_layer(self):
-        QgsProject.instance().addMapLayer(self.vl)
+        QgsProject.instance().addMapLayer(self.vl, False)
+        groupname = str(self.layer_name)
+        root = QgsProject.instance().layerTreeRoot()
+
+        self.group = root.findGroup(groupname)
+        if self.group is None:
+            self.group = root.addGroup(groupname)
+
+        self.group.insertLayer(0, self.vl)
 
         self.vl.updateExtents()
         self.set_styles()
@@ -337,10 +360,31 @@ class QGISAllObjects:
         return {k: QGISOutliers(v, crs=self.crs) for k, v in outliers.items()}
 
     def set_dna_measures(self, measures, lines=True):
+        res = {}
         if lines is True:
-            res = {k: QGISDNAMeasureGeometry(v) for k, v in measures.items() if v.geometry_type == 'Line'}
+            type_ = 'Line'
         else:
-            res = {k: QGISDNAMeasureGeometry(v) for k, v in measures.items() if v.geometry_type == 'Point'}
+            type_ = 'Point'
+
+        for k, v in measures.items():
+            count = 0
+            for item in v:
+                if item.geometry_type == type_:
+                    if not isinstance(item, typing.Hashable):
+                        if isinstance(item, list):
+                            item = tuple(item)
+                        else:
+                            item = str(item)
+
+                    if k not in res:
+                        res[k] = item
+                    else:
+                        count += 1
+                        k2 = tuple(k)
+                        k2 = tuple(str(i) + f'-dup-{str(count)}' for i in k2)
+                        res[k2] = item
+
+
         if len(res) > 0:
             return res
         else:
