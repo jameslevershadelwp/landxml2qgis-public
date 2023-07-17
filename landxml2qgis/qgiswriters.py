@@ -15,11 +15,13 @@ from utilities.dcmgeometrysdk.geometryfunctions.misclosefunctions import Misclos
 from utilities.dcmgeometrysdk.dna.dnareaders import DNAAdjustedMeasures, DNAAdjustedCoordinates
 
 class QGISLayer:
-    def __init__(self, objects, suffix='Point', layer_type='Point', fields_to_remove=None, location='memory',
-                 styles=None, process=False, crs=None):
+    def __init__(self, objects, suffix='Point', layer_type='Point', fields_to_remove=None, fields_to_keep=None,
+                 location='memory', styles=None, process=False, crs=None):
         self.objects = objects
         if fields_to_remove is None:
             fields_to_remove = []
+        if fields_to_keep is None:
+            fields_to_keep = []
 
         self.layer_name = self.set_layer_name()
         self.type_of_layer = layer_type
@@ -30,7 +32,7 @@ class QGISLayer:
         self.vl = self.set_vector_layer(location, suffix)
         self.data = None
         self.field_types = []
-        self.fields = self.set_fields(fields_to_remove)
+        self.fields = self.set_fields(fields_to_remove, fields_to_keep)
 
         if isinstance(styles, collections.abc.Sequence) is False:
             styles = []
@@ -44,13 +46,17 @@ class QGISLayer:
         return QgsVectorLayer(self.type_of_layer + '?crs=EPSG:' + self.zone,
                               self.layer_name + suffix, location)
 
-    def set_fields(self, fields_to_remove):
+    def set_fields(self, fields_to_remove, fields_to_keep):
         fields = []
         self.field_types = []
         for p, obs in self.objects.items():
             for ob_name, ob in obs.items():
                 for k, v in ob.__dict__.items():
-                    if k != 'geometry' and k not in fields_to_remove:
+                    if len(fields_to_keep) > 0:
+                        if k in fields_to_keep:
+                            fields.append(QgsField(k, QVariant.String))
+                            self.field_types.append((k, 'str'))
+                    elif k != 'geometry' and k not in fields_to_remove:
                         # if isinstance(v, int):
                         #     fields.append(QgsField(k, QVariant.Int))
                         #     self.field_types.append((k, 'int'))
@@ -119,6 +125,8 @@ class QGISLayer:
                     #         i = float('NaN')
                     # else:
                     if i is not None:
+                        if hasattr(i, 'name'):
+                            i = str(i.name)
                         i = str(i)
                     row.append(i)
 
@@ -180,9 +188,6 @@ class QGISLayer:
 
 class QGISGeometry:
     def set_attributes(self, ob):
-        if isinstance(ob, PolygonGeom):
-            if len(ob.children) > 0:
-                ob.set_geometry_from_children()
         for k, v in ob.__dict__.items():
             if isinstance(v, list):
                 value = str(v)
@@ -195,7 +200,8 @@ class QGISGeometry:
 
     def set_qgis_geom(self, v):
         if v is not None:
-            geom = QgsGeometry.fromWkt(v.wkt)
+            geom = QgsGeometry()
+            geom.fromWkb(v.wkb)
         else:
             geom = None
         return geom

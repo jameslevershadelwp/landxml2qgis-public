@@ -45,6 +45,8 @@ class LandXML2QGISDialog(QtWidgets.QDialog, FORM_CLASS):
         # http://qt-project.org/doc/qt-4.8/designer-using-a-ui-file.html
         # #widgets-and-dialogs-with-auto-connect
         self.setupUi(self)
+        if self.my_settings.contains('xml_location'):
+            self.lineEdit.setText(self.my_settings.value('xml_location'))
         if self.my_settings.contains('dna_dir'):
             self.lineEdit_2.setText(self.my_settings.value('dna_dir'))
         if self.my_settings.contains('dna_outputs'):
@@ -62,7 +64,6 @@ class LandXML2QGISDialog(QtWidgets.QDialog, FORM_CLASS):
         self.pushButton_2.clicked.connect(self.set_dna_location)
         self.pushButton_3.clicked.connect(self.set_out_dna_location)
         self.pushButton_4.clicked.connect(self.set_folder_location)
-
 
     def upload_xml(self):
         dialog = QtWidgets.QFileDialog()

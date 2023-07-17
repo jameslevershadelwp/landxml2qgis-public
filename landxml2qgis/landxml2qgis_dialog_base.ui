@@ -7,517 +7,14 @@
     <x>0</x>
     <y>0</y>
     <width>964</width>
-    <height>705</height>
+    <height>710</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>XML to QGIS</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="30" column="1">
-    <layout class="QHBoxLayout" name="horizontalLayout_9">
-     <item>
-      <widget class="QDialogButtonBox" name="button_box">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="standardButtons">
-        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="14" column="0" colspan="2">
-    <layout class="QHBoxLayout" name="horizontalLayout_5">
-     <item>
-      <widget class="QCheckBox" name="lineCheckBox">
-       <property name="text">
-        <string>Lines</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="pointCheckBox">
-       <property name="text">
-        <string>Points</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="polygonCheckBox">
-       <property name="text">
-        <string>Polygons</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="loopCheckBox">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="text">
-        <string>Loops</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="adminCheckBox">
-       <property name="text">
-        <string>Admin</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="3" column="0" colspan="3">
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QLineEdit" name="lineEdit">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pushButton">
-       <property name="text">
-        <string>...</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="8" column="0">
-    <widget class="QLabel" name="label_17">
-     <property name="text">
-      <string>Zone</string>
-     </property>
-    </widget>
-   </item>
-   <item row="6" column="0" colspan="4">
-    <layout class="QHBoxLayout" name="horizontalLayout_4">
-     <item>
-      <widget class="QLineEdit" name="lineEdit_4">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pushButton_4">
-       <property name="text">
-        <string>...</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="2" column="0" colspan="2">
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>LandXML Location (does accept an ADJ file,  but no options are used)</string>
-     </property>
-    </widget>
-   </item>
-   <item row="27" column="0" colspan="5">
-    <widget class="QLabel" name="label_3">
-     <property name="text">
-      <string>DNA &amp; Downloads Output Location</string>
-     </property>
-    </widget>
-   </item>
-   <item row="7" column="0" colspan="2">
-    <widget class="QLabel" name="label_5">
-     <property name="text">
-      <string>Load options</string>
-     </property>
-    </widget>
-   </item>
-   <item row="16" column="0">
-    <widget class="QLabel" name="label_6">
-     <property name="text">
-      <string>Adj Options</string>
-     </property>
-    </widget>
-   </item>
-   <item row="21" column="0" colspan="4">
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
-     <item>
-      <widget class="QLineEdit" name="lineEdit_2">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pushButton_2">
-       <property name="text">
-        <string>...</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="18" column="0" colspan="3">
-    <layout class="QHBoxLayout" name="horizontalLayout_8">
-     <item>
-      <widget class="QCheckBox" name="runDNACheckBox">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="text">
-        <string>Include adjustment
-(Requires DynAdjust)</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="onlyDNACheckBox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Only Adjustment</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="multiDNACheckBox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Multi Plan Adjust</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="apuCheckBox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Output APU file</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="outlierCheckBox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Outliers</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QCheckBox" name="multiThreadCheckBox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>MultiThread</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="14" column="2">
-    <widget class="QLineEdit" name="lineEdit_10">
-     <property name="text">
-      <string>default</string>
-     </property>
-     <property name="maxLength">
-      <number>100</number>
-     </property>
-    </widget>
-   </item>
-   <item row="20" column="0" colspan="4">
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>DNA Executable Location</string>
-     </property>
-    </widget>
-   </item>
-   <item row="28" column="0" colspan="4">
-    <layout class="QHBoxLayout" name="horizontalLayout_3">
-     <item>
-      <widget class="QLineEdit" name="lineEdit_3">
-       <property name="text">
-        <string>C:\Data</string>
-       </property>
-       <property name="maxLength">
-        <number>500</number>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QPushButton" name="pushButton_3">
-       <property name="text">
-        <string>...</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="30" column="2">
-    <widget class="QLabel" name="label_13">
-     <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Get your Victorian LandXMLs here:  &lt;a href=&quot; https://arcg.is/0Sfy0X&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0068da;&quot;&gt;https://arcg.is/0Sfy0X&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-     <property name="openExternalLinks">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0" colspan="2">
-    <widget class="QLineEdit" name="AWS_LineEdit">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="8" column="1">
-    <widget class="QComboBox" name="zoneComboBox">
-     <item>
-      <property name="text">
-       <string>55 - MGA2020</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>54 - MGA2020</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>VicGrid - MGA2020</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>GDA2020</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>56- MGA2020</string>
-      </property>
-     </item>
-     <item>
-      <property name="text">
-       <string>53 - MGA2020</string>
-      </property>
-     </item>
-    </widget>
-   </item>
-   <item row="8" column="2">
-    <widget class="QLabel" name="label_9">
-     <property name="text">
-      <string>Loop minimum misclose</string>
-     </property>
-    </widget>
-   </item>
-   <item row="0" column="0" colspan="5">
-    <widget class="QLabel" name="label_12">
-     <property name="enabled">
-      <bool>true</bool>
-     </property>
-     <property name="text">
-      <string>AWS Search and Download,  don't forget to use the checkdigit (i.e TP1234567H)</string>
-     </property>
-    </widget>
-   </item>
-   <item row="23" column="0" colspan="3">
-    <layout class="QHBoxLayout" name="horizontalLayout_6">
-     <item>
-      <widget class="QLabel" name="label_10">
-       <property name="text">
-        <string>Profile Name</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_11">
-       <property name="text">
-        <string>Profile Location</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_8">
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
-       </property>
-       <property name="text">
-        <string>Iteration Threshold</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_7">
-       <property name="text">
-        <string>Max Iterations</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="1" column="2">
-    <layout class="QVBoxLayout" name="verticalLayout">
-     <item>
-      <widget class="QCheckBox" name="overwriteCheckBox">
-       <property name="enabled">
-        <bool>true</bool>
-       </property>
-       <property name="text">
-        <string>Overwrite Existing</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="19" column="0" colspan="3">
-    <layout class="QHBoxLayout" name="horizontalLayout_11">
-     <property name="sizeConstraint">
-      <enum>QLayout::SetDefaultConstraint</enum>
-     </property>
-     <item>
-      <widget class="QCheckBox" name="dockerCheckBox">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>100</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Use Docker</string>
-       </property>
-      </widget>
-     </item>
-     <item alignment="Qt::AlignRight">
-      <widget class="QLabel" name="label_15">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>600</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Mount Directory:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="mount_directory_le">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>700</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>/mnt/</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="label_16">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Container Name:</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="container_le">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>DNA</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="5" column="0" colspan="2">
-    <widget class="QLabel" name="label_4">
-     <property name="text">
-      <string>Folder of LandXMLs (Optional take preferance over land xml location)</string>
-     </property>
-    </widget>
-   </item>
-   <item row="26" column="0" colspan="3">
-    <layout class="QHBoxLayout" name="horizontalLayout_7">
-     <item>
-      <widget class="QLineEdit" name="lineEdit_11">
-       <property name="text">
-        <string>dcmvr</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="lineEdit_7">
-       <property name="text">
-        <string>default</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="lineEdit_9">
-       <property name="text">
-        <string>.0005</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLineEdit" name="lineEdit_8">
-       <property name="text">
-        <string>100</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item row="15" column="0" colspan="3">
+   <item row="20" column="0" colspan="3">
     <layout class="QHBoxLayout" name="horizontalLayout_10">
      <item>
       <widget class="QCheckBox" name="linksfeet">
@@ -613,6 +110,536 @@
       </widget>
      </item>
     </layout>
+   </item>
+   <item row="8" column="0">
+    <widget class="QLabel" name="label_17">
+     <property name="text">
+      <string>Zone</string>
+     </property>
+    </widget>
+   </item>
+   <item row="31" column="0" colspan="3">
+    <layout class="QHBoxLayout" name="horizontalLayout_7">
+     <item>
+      <widget class="QLineEdit" name="lineEdit_11">
+       <property name="text">
+        <string>dcmvr</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="lineEdit_7">
+       <property name="text">
+        <string>default</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="lineEdit_9">
+       <property name="text">
+        <string>.0005</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="lineEdit_8">
+       <property name="text">
+        <string>100</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="26" column="0" colspan="4">
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QLineEdit" name="lineEdit_2">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="text">
+        <string>...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="32" column="0" colspan="5">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>DNA &amp; Downloads Output Location</string>
+     </property>
+    </widget>
+   </item>
+   <item row="35" column="1">
+    <layout class="QHBoxLayout" name="horizontalLayout_9">
+     <item>
+      <widget class="QDialogButtonBox" name="button_box">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="19" column="0" colspan="2">
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <item>
+      <widget class="QCheckBox" name="lineCheckBox">
+       <property name="text">
+        <string>Lines</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="pointCheckBox">
+       <property name="text">
+        <string>Points</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="polygonCheckBox">
+       <property name="text">
+        <string>Polygons</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="loopCheckBox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Loops</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="adminCheckBox">
+       <property name="text">
+        <string>Admin</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="24" column="0" colspan="3">
+    <layout class="QHBoxLayout" name="horizontalLayout_11">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetDefaultConstraint</enum>
+     </property>
+     <item>
+      <widget class="QCheckBox" name="dockerCheckBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>100</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Use Docker</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item alignment="Qt::AlignRight">
+      <widget class="QLabel" name="label_15">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>600</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Mount Directory:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="mount_directory_le">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>700</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>/mnt/</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_16">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Container Name:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="container_le">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>DNA</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="0" column="0" colspan="5">
+    <widget class="QLabel" name="label_12">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>AWS Search and Download,  don't forget to use the checkdigit (i.e TP1234567H)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="23" column="0" colspan="3">
+    <layout class="QHBoxLayout" name="horizontalLayout_8">
+     <item>
+      <widget class="QCheckBox" name="runDNACheckBox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Include adjustment
+(Requires DynAdjust)</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="onlyDNACheckBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Only Adjustment</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="multiDNACheckBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Multi Plan Adjust</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="apuCheckBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Output APU file</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="outlierCheckBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>Outliers</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="multiThreadCheckBox">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>MultiThread</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="21" column="0">
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>Adj Options</string>
+     </property>
+    </widget>
+   </item>
+   <item row="25" column="0" colspan="4">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>DNA Executable Location</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0" colspan="2">
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>Load options</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="2">
+    <widget class="QLabel" name="label_9">
+     <property name="text">
+      <string>Loop minimum misclose</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="2">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>Folder of LandXMLs (Optional take preferance over land xml location)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="33" column="0" colspan="4">
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <item>
+      <widget class="QLineEdit" name="lineEdit_3">
+       <property name="text">
+        <string>C:\Data</string>
+       </property>
+       <property name="maxLength">
+        <number>500</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_3">
+       <property name="text">
+        <string>...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="3" column="0" colspan="3">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QLineEdit" name="lineEdit">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton">
+       <property name="text">
+        <string>...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="1" column="2">
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QCheckBox" name="overwriteCheckBox">
+       <property name="enabled">
+        <bool>true</bool>
+       </property>
+       <property name="text">
+        <string>Overwrite Existing</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="19" column="2">
+    <widget class="QLineEdit" name="lineEdit_10">
+     <property name="text">
+      <string>default</string>
+     </property>
+     <property name="maxLength">
+      <number>100</number>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="2">
+    <widget class="QLineEdit" name="AWS_LineEdit">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>LandXML Location (does accept an ADJ file,  but no options are used)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="35" column="2">
+    <widget class="QLabel" name="label_13">
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Get your Victorian LandXMLs here:  &lt;a href=&quot; https://arcg.is/0Sfy0X&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0068da;&quot;&gt;https://arcg.is/0Sfy0X&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="openExternalLinks">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0" colspan="4">
+    <layout class="QHBoxLayout" name="horizontalLayout_4">
+     <item>
+      <widget class="QLineEdit" name="lineEdit_4">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_4">
+       <property name="text">
+        <string>...</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="8" column="1">
+    <widget class="QComboBox" name="zoneComboBox">
+     <item>
+      <property name="text">
+       <string>55 - MGA2020</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>54 - MGA2020</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>VicGrid - MGA2020</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>GDA2020</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>56- MGA2020</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>53 - MGA2020</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item row="28" column="0" colspan="3">
+    <layout class="QHBoxLayout" name="horizontalLayout_6">
+     <item>
+      <widget class="QLabel" name="label_10">
+       <property name="text">
+        <string>Profile Name</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_11">
+       <property name="text">
+        <string>Profile Location</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_8">
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="text">
+        <string>Iteration Threshold</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Max Iterations</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="9" column="2">
+    <widget class="QCheckBox" name="exportOnlyCheckBox">
+     <property name="text">
+      <string>Export Only</string>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="0">
+    <widget class="QCheckBox" name="parentGeometryCheckBox">
+     <property name="text">
+      <string>Parent Geometries</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="9" column="1">
+    <widget class="QCheckBox" name="exportCheckBox">
+     <property name="text">
+      <string>Export ePlan Compliance</string>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>
@@ -847,22 +874,6 @@
    <signal>toggled(bool)</signal>
    <receiver>dockerCheckBox</receiver>
    <slot>setEnabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>103</x>
-     <y>378</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>59</x>
-     <y>420</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>runDNACheckBox</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>dockerCheckBox</receiver>
-   <slot>setChecked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
      <x>103</x>

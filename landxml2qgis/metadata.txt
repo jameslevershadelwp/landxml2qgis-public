@@ -6,7 +6,7 @@
 name=LandXML2QGIS
 qgisMinimumVersion=3.0
 description=Import Vic LandXML into QGIS temp layers
-version=0.3.8
+version=0.3.11
 author=James Leversha, Department of Environment, Land, Water and Planning
 email=james.k.leversha@delwp.vic.gov.au
 
