@@ -47,6 +47,8 @@ class LandXML2QGISDialog(QtWidgets.QDialog, FORM_CLASS):
         self.setupUi(self)
         if self.my_settings.contains('xml_location'):
             self.lineEdit.setText(self.my_settings.value('xml_location'))
+        if self.my_settings.contains('credentials_file'):
+            self.lineEdit_5.setText(self.my_settings.value('credentials_file'))
         if self.my_settings.contains('dna_dir'):
             self.lineEdit_2.setText(self.my_settings.value('dna_dir'))
         if self.my_settings.contains('dna_outputs'):
@@ -64,6 +66,7 @@ class LandXML2QGISDialog(QtWidgets.QDialog, FORM_CLASS):
         self.pushButton_2.clicked.connect(self.set_dna_location)
         self.pushButton_3.clicked.connect(self.set_out_dna_location)
         self.pushButton_4.clicked.connect(self.set_folder_location)
+        self.pushButton_5.clicked.connect(self.set_credential_location)
 
     def upload_xml(self):
         dialog = QtWidgets.QFileDialog()
@@ -87,3 +90,8 @@ class LandXML2QGISDialog(QtWidgets.QDialog, FORM_CLASS):
         flags = QtWidgets.QFileDialog.ShowDirsOnly
         fname = dialog.getExistingDirectory(self, 'Select Input Directory', "", flags)
         self.lineEdit_4.setText(fname)
+
+    def set_credential_location(self):
+        dialog = QtWidgets.QFileDialog()
+        fname, _ = dialog.getOpenFileName(self, 'Select Credentials Location', "", "csv file (*.csv);")
+        self.lineEdit_5.setText(fname)

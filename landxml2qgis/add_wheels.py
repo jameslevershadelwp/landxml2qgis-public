@@ -19,33 +19,31 @@ def add_wheels():
         path = os.path.join(this_dir, 'wheels', 'networkx-2.6.2-py3-none-any.whl')
         sys.path.append(path)
 
-    try:
-        import s3transfer
-    except ImportError:
-        this_dir = os.path.dirname(os.path.realpath(__file__))
-        path = os.path.join(this_dir, 'wheels', 's3transfer-0.5.0-py3-none-any.whl')
-        sys.path.append(path)
+    # this_dir = os.path.dirname(os.path.realpath(__file__))
+    # path = os.path.join(this_dir, 'wheels', 'boto3-1.9.203-py2.py3-none-any.whl')
+    # sys.path.append(path)
+    #
+    # path = os.path.join(this_dir, 'wheels', 'botocore-1.12.203-py2.py3-none-any.whl')
+    # sys.path.append(path)
+    #
+    # path = os.path.join(this_dir, 'wheels', 'python_dateutil-2.8.2-py2.py3-none-any.whl')
+    # sys.path.append(path)
+    #
+    # path = os.path.join(this_dir, 'wheels', 'jmespath-0.10.0-py2.py3-none-any.whl')
+    # sys.path.append(path)
+    #
+    # path = os.path.join(this_dir, 'wheels', 's3transfer-0.5.0-py3-none-any.whl')
+    # sys.path.append(path)
+    #
+    # path = os.path.join(this_dir, 'wheels', 'six-1.16.0-py2.py3-none-any.whl')
+    # sys.path.append(path)
+    #
+    # path = os.path.join(this_dir, 'wheels', 'urllib3-1.26.16-py2.py3-none-any.whl')
+    # sys.path.append(path)
 
-    try:
-        import botocore
-    except ImportError:
-        this_dir = os.path.dirname(os.path.realpath(__file__))
-        path = os.path.join(this_dir, 'wheels', 'botocore-1.21.23-py3-none-any.whl')
-        sys.path.append(path)
 
-    try:
-        import jmespath
-    except ImportError:
-        this_dir = os.path.dirname(os.path.realpath(__file__))
-        path = os.path.join(this_dir, 'wheels', 'jmespath-0.10.0-py2.py3-none-any.whl')
-        sys.path.append(path)
 
-    try:
-        import boto3
-    except ImportError:
-        this_dir = os.path.dirname(os.path.realpath(__file__))
-        path = os.path.join(this_dir, 'wheels', 'boto3-1.18.23-py3-none-any.whl')
-        sys.path.append(path)
+
 
     try:
         import shapely

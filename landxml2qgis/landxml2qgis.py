@@ -34,6 +34,7 @@ from PyQt5.QtCore import Qt
 
 import sys
 import platform
+import csv
 import os.path
 import os
 from inspect import getsourcefile
@@ -256,7 +257,7 @@ class LandXML2QGIS:
     def save_settings(self):
         self.dlg.my_settings.setValue('xml_location', self.dlg.lineEdit.text())
         self.dlg.my_settings.setValue('dna_dir', self.dlg.lineEdit_2.text())
-        # self.dlg.my_settings.setValue('credentials_dir', self.dlg.lineEdit_5.text())
+        self.dlg.my_settings.setValue('credentials_file', self.dlg.lineEdit_5.text())
         self.dlg.my_settings.setValue('dna_outputs', self.dlg.lineEdit_3.text())
         self.dlg.my_settings.setValue('max_iter', self.dlg.lineEdit_8.text())
         self.dlg.my_settings.setValue('iter_thresh', self.dlg.lineEdit_9.text())
@@ -343,48 +344,122 @@ class LandXML2QGIS:
         elif out_text == 'GDA2020':
             self.out_crs = 7844
 
+    def download_file(self, s3, item, filename, suf):
+        item = item.split(r'/object/')[-1]
+        bucket, sep, key = (item.partition('/'))
+        try:
+            s3.Bucket(bucket).download_file(key, str(Path(filename + suf)))
+        except Exception as e:
+            QMessageBox.information(None, "DEBUG:", f'{key} doesnt exist in AWS {e}')
+
+    def get_plan_from_spi(self, f, dynamodb):
+
+        spi_table_name = 'dcm-prd-spiDetails'
+        spi_table = dynamodb.Table(spi_table_name)
+
+        response = spi_table.get_item(Key={'spi': f})
+        filename = response.get('Item', {}).get('diagram_location')
+
+        return filename
+
+    def download_from_s3(self, awsnames=None):
+
+        cf = self.dlg.lineEdit_5.text()
+        with open(cf, 'r') as open_csv:
+            a = csv.DictReader(open_csv)
+            row = [row for row in a][0]
+            awsid = row['Access key ID']
+            awssk = row['Secret access key']
+
+
+        plans = []
+        region = 'ap-southeast-2'
+        out_path_text = Path(self.dlg.lineEdit_3.text())
+        session = boto3.Session(aws_access_key_id=awsid,
+                                aws_secret_access_key=awssk, region_name=region)
+        dynamodb = session.resource('dynamodb', region)
+
+        filenames = []
+        if awsnames is not None:
+            for f in awsnames:
+                if '\\' in f:
+                    f = self.get_plan_from_spi(f, dynamodb)
+                filenames.append(f)
+
+        s3 = session.resource('s3')
+        table_name = 'dcm-prd-planBasedonSPI'
+        table = dynamodb.Table(table_name)
+
+        missing_xmls = []
+        for filename in filenames:
+            afr = None
+            if '_AFR' in filename:
+                filename, sep, afr = filename.rpartition('_')
+
+            out_path = Path(out_path_text, filename)
+            out_path.mkdir(exist_ok=True, parents=True)
+
+            response = table.get_item(Key={'planNumber': filename})
+
+            if afr is not None:
+                xml = response.get('Item', {}).get('afr_additional_records', {}).get(afr.upper())
+                xml = xml.get('current_xml_object_url')
+
+                path_name = Path(str(out_path), 'AFRs', f'{afr}')
+                path_name.mkdir(exist_ok=True, parents=True)
+                file_details = str(Path(path_name, filename + f'_{afr}'))
+            else:
+                xml = response.get('Item', {}).get('current_xml_object_url')
+                file_details = str(Path(out_path, filename))
+
+            over = self.dlg.overwriteCheckBox.isChecked()
+
+            if xml is not None:
+                if over is True or Path(file_details + '.xml').exists() is False:
+                    self.download_file(s3, xml, file_details, '.xml')
+            else:
+                missing_xmls.append(filename)
+
+            plans.append(str(Path(file_details + '.xml')))
+
+        if len(missing_xmls) > 0:
+            missing_xmls = '\n'.join(missing_xmls)
+            QMessageBox.information(None, "DEBUG:", f'No Plan PDF Available for {missing_xmls}')
+
+        return plans
+
     def get_file_names(self):
         repo = True
         fname = None
-        aws_name = self.dlg.AWS_LineEdit.text()
-        if len(aws_name) > 0:
-            outpath = Path(self.dlg.lineEdit_3.text(), aws_name)
-            outxml = Path(outpath, f'{aws_name}.xml')
-            if self.dlg.overwriteCheckBox.isChecked() is True or outxml.exists() is False:
-                bucket_name = 'dcm-file-sharing'
-
-                url = f'https://{bucket_name}.s3.amazonaws.com/all/{aws_name}.xml'
-                headers = {'Host': f'{bucket_name}.s3.ap-southeast-2.amazonaws.com'}
-                r = requests.get(url, headers=headers)
-                if r.ok is True:
-                    outpath.mkdir(parents=True, exist_ok=True)
-                    QMessageBox.information(None, "Downloading plan",
-                                            'Found plan in the repository, dowloading to:\n'
-                                            f'{str(outxml)}')
-                    outpath = Path(self.dlg.lineEdit_3.text(), aws_name)
-                    outpath.mkdir(parents=True, exist_ok=True)
-                    outxml = Path(outpath, f'{aws_name}.xml')
-                    with open(outxml, 'wb') as open_file:
-                        open_file.write(r.content)
-                    fname = str(outxml)
-                else:
-                    QMessageBox.information(None, "No plan",
-                                            'Couldnt find plan in the repository')
-                    repo = False
-            elif outxml.exists() is True:
-                fname = str(outxml)
-
+        fnames = []
         if fname is None:
             fname = self.dlg.lineEdit.text()
-        fnames = []
+
         if len(fname) > 0:
             fnames.append(fname)
 
         folders = self.dlg.lineEdit_4.text()
         if len(folders) > 0:
-            fnames = []
             for directory, fs, filenames in os.walk(str(folders)):
                 fnames.extend([str(Path(directory, f)) for f in filenames if f.endswith(('.xml', '.adj'))])
+
+        cf = self.dlg.lineEdit_5.text().strip()
+        aws_names = [i for i in self.dlg.AWS_LineEdit.text().split(',') if len(i) > 0]
+
+        if len(aws_names) > 0:
+            fnames = []
+            if len(cf) > 0:
+                fnames.extend(self.download_from_s3(aws_names))
+            else:
+                QMessageBox.information(None, "No credendial csv",
+                                        'Please put a location of your credentials file')
+                repo = False
+
+        elif len(fnames) == 0:
+            QMessageBox.information(None, "No plan",
+                                    'Couldnt find plan in the repository')
+            repo = False
+
 
         if len(fnames) > 0:
             self.filenames = fnames
