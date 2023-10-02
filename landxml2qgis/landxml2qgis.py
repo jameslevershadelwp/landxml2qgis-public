@@ -256,6 +256,7 @@ class LandXML2QGIS:
 
     def save_settings(self):
         self.dlg.my_settings.setValue('xml_location', self.dlg.lineEdit.text())
+        self.dlg.my_settings.setValue('aws_location', self.dlg.AWS_LineEdit.text())
         self.dlg.my_settings.setValue('dna_dir', self.dlg.lineEdit_2.text())
         self.dlg.my_settings.setValue('credentials_file', self.dlg.lineEdit_5.text())
         self.dlg.my_settings.setValue('dna_outputs', self.dlg.lineEdit_3.text())
@@ -264,7 +265,21 @@ class LandXML2QGIS:
         self.dlg.my_settings.setValue("recalc", self.dlg.recalcCheckBox.isChecked())
         self.dlg.my_settings.setValue("multi-thread", self.dlg.multiThreadCheckBox.isChecked())
         self.dlg.my_settings.setValue("docker", self.dlg.dockerCheckBox.isChecked())
-
+        self.dlg.my_settings.setValue("lines", self.dlg.lineCheckBox.isChecked())
+        self.dlg.my_settings.setValue("points", self.dlg.pointCheckBox.isChecked())
+        self.dlg.my_settings.setValue("polygons", self.dlg.polygonCheckBox.isChecked())
+        self.dlg.my_settings.setValue("loops", self.dlg.loopCheckBox.isChecked())
+        self.dlg.my_settings.setValue("admin", self.dlg.adminCheckBox.isChecked())
+        self.dlg.my_settings.setValue("swing", self.dlg.swingCheckBox.isChecked())
+        self.dlg.my_settings.setValue("overwrite", self.dlg.overwriteCheckBox.isChecked())
+        self.dlg.my_settings.setValue('swing_value', self.dlg.swingValue.text())
+        self.dlg.my_settings.setValue('starting_point', self.dlg.startingPointEdit.text())
+        self.dlg.my_settings.setValue('run_dna', self.dlg.runDNACheckBox.isChecked())
+        self.dlg.my_settings.setValue('only_adj', self.dlg.onlyDNACheckBox.isChecked())
+        self.dlg.my_settings.setValue('linksfeet', self.dlg.linksfeet.isChecked())
+        self.dlg.my_settings.setValue('eplan_comp', self.dlg.exportCheckBox.isChecked())
+        self.dlg.my_settings.setValue('eplan_comp_only', self.dlg.exportOnlyCheckBox.isChecked())
+        self.dlg.my_settings.setValue('loop_misclose', self.dlg.lineEdit_10.text())
         # style files
 
     def set_styles(self):

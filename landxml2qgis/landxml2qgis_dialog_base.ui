@@ -652,7 +652,7 @@
      <item>
       <widget class="QLineEdit" name="lineEdit_5">
        <property name="text">
-        <string>/Users/jamesleversha/Downloads/work_keys/credentials.csv</string>
+        <string/>
        </property>
       </widget>
      </item>

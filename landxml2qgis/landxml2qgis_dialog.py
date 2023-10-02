@@ -61,6 +61,46 @@ class LandXML2QGISDialog(QtWidgets.QDialog, FORM_CLASS):
             self.lineEdit_10.setText(self.my_settings.value('mis_tol'))
         if self.my_settings.contains('recalc'):
             self.recalcCheckBox.setChecked(self.my_settings.value('recalc', type=bool))
+        if self.my_settings.contains('multi-thread'):
+            self.multiThreadCheckBox.setChecked(self.my_settings.value('multi-thread', type=bool))
+        if self.my_settings.contains('docker'):
+            self.dockerCheckBox.setChecked(self.my_settings.value('docker', type=bool))
+        if self.my_settings.contains('points'):
+            self.pointCheckBox.setChecked(self.my_settings.value('points', type=bool))
+        if self.my_settings.contains('lines'):
+            self.lineCheckBox.setChecked(self.my_settings.value('lines', type=bool))
+        if self.my_settings.contains('polygons'):
+            self.polygonCheckBox.setChecked(self.my_settings.value('polygons', type=bool))
+        if self.my_settings.contains('loops'):
+            self.loopCheckBox.setChecked(self.my_settings.value('loops', type=bool))
+        if self.my_settings.contains('admin'):
+            self.adminCheckBox.setChecked(self.my_settings.value('admin', type=bool))
+        if self.my_settings.contains('swing'):
+            self.swingCheckBox.setChecked(self.my_settings.value('swing', type=bool))
+        if self.my_settings.contains('swing_value'):
+            self.swingValue.setText(self.my_settings.value('swing_value'))
+        if self.my_settings.contains('aws_location'):
+            self.AWS_LineEdit.setText(self.my_settings.value('aws_location'))
+        if self.my_settings.contains('overwrite'):
+            self.overwriteCheckBox.setChecked(self.my_settings.value('overwrite', type=bool))
+        if self.my_settings.contains('linksfeet'):
+            self.linksfeet.setChecked(self.my_settings.value('linksfeet', type=bool))
+        if self.my_settings.contains('eplan_comp'):
+            self.exportCheckBox.setChecked(self.my_settings.value('eplan_comp', type=bool))
+            if self.my_settings.value('eplan_comp', type=bool) is True:
+                if self.my_settings.contains('eplan_comp_only'):
+                    self.exportOnlyCheckBox.setChecked(self.my_settings.value('eplan_comp_only', type=bool))
+        if self.my_settings.contains('starting_point'):
+            self.startingPointEdit.setText(self.my_settings.value('starting_point'))
+        if self.my_settings.contains('loop_misclose'):
+            self.lineEdit_10.setText(self.my_settings.value('loop_misclose'))
+        if self.my_settings.contains('run_dna'):
+            self.runDNACheckBox.setChecked(self.my_settings.value('run_dna', type=bool))
+            if self.my_settings.value('run_dna', type=bool) is True:
+                if self.my_settings.contains('only_dna'):
+                    self.onlyDNACheckBox.setChecked(self.my_settings.value('only_dna', type=bool))
+
+
 
         self.pushButton.clicked.connect(self.upload_xml)
         self.pushButton_2.clicked.connect(self.set_dna_location)
